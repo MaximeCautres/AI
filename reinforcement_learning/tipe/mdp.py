@@ -90,8 +90,7 @@ def make_a_step():
     agent['values'][state, action, state_prime] += alpha * new
 
 
-deb = time.time()
-
+beg = time.time()
 
 world = generate_world_mouse()
 agent = initialize_agent_mouse()
@@ -109,4 +108,4 @@ for life in range(life_count):
         make_a_step()
 
 end = time.time()
-print(int((end-deb)//60), "minutes", int((end - deb) % 60), "secondes for a", w-2, "x", h-2, "map")
+print("{0} minutes and {1} seconds for a {2} x {3} map".format(int((end - beg)//60), int((end - beg) % 60), w-2, h-2))
