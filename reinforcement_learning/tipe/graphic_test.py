@@ -1,12 +1,10 @@
 from tkinter import *
+import random
 
 
 class Drawing:
 
-    """ Initialize a new drawing area """
-
     def __init__(self, root, w, h):
-
         self.w = w
         self.h = h
 
@@ -22,7 +20,6 @@ class Drawing:
         self.canvas.bind('<MouseWheel>', self.wheel)
 
     def add_node(self, event):
-
         r = 24
         x, y = event.x, event.y
         c = color_map[self.items[self.current_item]]
@@ -30,26 +27,32 @@ class Drawing:
         self.objects.append(obj)
 
     def undo(self, event=None):
-
         if self.objects:
             obj = self.objects.pop()
             self.canvas.delete(obj)
 
     def wheel(self, event):
-
         self.current_item = int((self.current_item + event.delta / 120) % len(self.items))
         item_selected.update(self.items[self.current_item])
+        self.change_color(1, random.choice(list(color_map.values())))
+
+    def change_color(self, tag, nc):
+        self.canvas.itemconfigure(tag, fill=nc)
+
+    def get_coord(self, tag):
+        return self.canvas.coords(tag)
+
+    def move(self, tag, p):
+        self.canvas.coords(tag, p)
 
 
 class Text:
 
     def __init__(self, root, side, text):
-
         self.label = Label(root, fg='orange', text=text, font='Verdana 20 bold')
         self.label.pack(side=side, padx=20, pady=5)
 
     def update(self, text):
-
         self.label.config(text=text, fg=color_map[text])
 
 
