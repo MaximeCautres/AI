@@ -2,7 +2,7 @@ from tkinter import *
 import numpy as np
 
 knuth = 10 ** 6
-unit = 80
+unit = 34
 
 
 class Mdp:
@@ -26,7 +26,7 @@ class Mdp:
         self.t = 0
 
         self.canvas = self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit, background='black')
-        self.canvas.pack(side=BOTTOM, padx=1, pady=1)
+        self.canvas.pack(side=LEFT, padx=1, pady=1)
 
         self.maps = maps
         self.grid = np.array([[self.canvas.create_rectangle(unit*x, unit*y, unit*(x+1), unit*(y+1), fill=self.get_color(y, x))
@@ -36,6 +36,8 @@ class Mdp:
 
         self.canvas.bind('<Button-1>', self.make_a_step)
         self.canvas.bind('<Button-3>', self.re_spawn)
+
+        self.train()
 
     def expected(self, vs, s, a):
         return np.sum(np.multiply(self.world['transitions'][s, a], vs[s, a]))
@@ -69,6 +71,12 @@ class Mdp:
 
         self.update_color(state, state_prime)
 
+    def train(self):
+        for _ in range(10**3):
+            for _ in range(2 * int(self.s_count ** 0.5)):
+                self.make_a_step()
+            self.re_spawn()
+
     def re_spawn(self, event=None):
         self.update_color(self.agent['state'], self.start)
         self.agent['state'] = self.start
@@ -88,10 +96,9 @@ class Mdp:
         self.change_color(self.grid[self.state_to_coord(new)], 'blue')
 
 
-def generate_world_mouse():
-    h = 7 + 2
-    w = 10 + 2
-    p = 0.3
+def generate_world_mouse(height, width, p):
+    h = 1 + height + 1
+    w = 1 + width + 1
 
     begin = w + 1
     goal = (h - 2, w - 2)
@@ -121,6 +128,7 @@ def generate_world_mouse():
 window = Tk()
 window.title('I like trains !')
 
-my_mdp = Mdp(*generate_world_mouse(), 0.9, 6, 0.8)
+my_mdp_one = Mdp(*generate_world_mouse(24, 24, 0.2), 0.9, 6, 0.8)
+
 
 window.mainloop()
