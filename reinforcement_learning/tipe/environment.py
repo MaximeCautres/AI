@@ -1,6 +1,6 @@
 import random
-from tkinter import *
-from PIL import Image, ImageTk, ImageDraw
+import pygame
+from PIL import Image, ImageDraw
 
 
 class Infix:
@@ -27,6 +27,7 @@ class Infix:
 class Vec2:
 
     def __init__(self, x, y):
+        self.coord = (x, y)
         self.x = x
         self.y = y
 
@@ -53,13 +54,14 @@ class Vec2:
 
 
 p = Infix(lambda u, v: u.sum(v))
-d = Infix(lambda u, v: u.dist(v))
 m = Infix(lambda u, v: u.dif(v))
+s = Infix(lambda u, k: u.scale_prod(k))
+d = Infix(lambda u, v: u.dist(v))
 
 
 class Rectangle:
 
-    def __init__(self, tlc, brc, convex = True):
+    def __init__(self, tlc, brc, convex=True):
         self.tlc = tlc
         self.brc = brc
         self.convex = convex
@@ -83,50 +85,48 @@ class Boat:
         if not collided:
             self.v = np | m | self.p
             self.p = np
-        else:
-            print(42)
-            exit()
+            return 6
 
 
-class Frame:
-
-    def __init__(self, bg):
-
-        self.bg = ImageTk.PhotoImage(bg)
-        self.dim = (bg.width // 2, bg.height // 2)
-
-        self.canvas = Canvas(window, width=self.dim[0], height=self.dim[1], background='green')
-        self.canvas.pack(side=LEFT, padx=1, pady=1)
-
-        self.canvas.create_image(0, 0, image=self.bg)
+def pil_pyg(v):
+    img = background.copy()
+    img_draw = ImageDraw.Draw(img)
+    img_draw.rectangle([v.x, v.y] * 2, fill='blue')
+    pil_img = img.resize(img_size)
+    mode = pil_img.mode
+    size = pil_img.size
+    data = pil_img.tobytes()
+    return pygame.image.fromstring(data, size, mode)
 
 
-unit = 56
-height, width = 24, 24
-obstacles = [Rectangle(Vec2(1, height), Vec2(width, 1), False),
-             Rectangle(Vec2(5, 20), Vec2(10, 7))]
+unit = 36
+dims = Vec2(24, 24)
+img_size = (dims | s | unit).coord
+obstacles = [Rectangle(Vec2(0, dims.y-1), Vec2(dims.x-1, 0), False)]
 actions = [Vec2(i, j) for i in [-1, 0, 1] for j in [-1, 0, 1]]
-billy = Boat(Vec2(width // 2, height // 2), Vec2(0, 0))
+billy = Boat(Vec2(dims.x // 2, dims.y // 2), Vec2(0, 0))
 
-background = Image.new('RGB', (height, width), color='red')
-draw = ImageDraw.Draw(background)
+background = Image.new('RGB', dims.coord, color='black')
+bg_draw = ImageDraw.Draw(background)
 
 for obs in obstacles:
     if obs.convex:
-        tlc, brc = obs.tlc, obs.brc
-        draw.rectangle([tlc, brc], fill='white')
+        (x0, y0), (x1, y1) = obs.tlc.coord, obs.brc.coord
+        bg_draw.rectangle([x0, y0, x1, y1], fill='red')
 
-background.resize((height * unit, width * unit))
+pygame.init()
+screen = pygame.display.set_mode(img_size)
+inGame = True
 
-window = Tk()
-window.title('Title')
+while inGame:
+    screen.blit(pil_pyg(billy.p), (0, 0))
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            action = random.choice(actions)
+            print(action)
+            res = billy.apply_action(action)
+            if not res:
+                inGame = False
+    pygame.display.flip()
 
-frame = Frame(background)
-
-window.mainloop()
-
-while True:
-    action = random.choice(actions)
-    for i in range(3):
-        billy.apply_action(action)
-        print(billy.p, billy.v)
+pygame.quit()
