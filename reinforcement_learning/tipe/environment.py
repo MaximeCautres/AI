@@ -1,4 +1,7 @@
 import random
+from tkinter import *
+from PIL import Image, ImageTk, ImageDraw
+
 
 class Infix:
 
@@ -56,7 +59,7 @@ m = Infix(lambda u, v: u.dif(v))
 
 class Rectangle:
 
-    def __init__(self, tlc, brc, convex):
+    def __init__(self, tlc, brc, convex = True):
         self.tlc = tlc
         self.brc = brc
         self.convex = convex
@@ -72,25 +75,58 @@ class Boat:
         self.p = p0
         self.v = v0
 
-    def apply_action(self, action):
-        np = self.p | p | self.v | p | action
+    def apply_action(self, a):
+        np = self.p | p | self.v | p | a
         collided = False
         for obstacle in obstacles:
             collided = collided or obstacle.collide(np)
         if not collided:
             self.v = np | m | self.p
             self.p = np
-
         else:
-            exit("error 42")
+            print(42)
+            exit()
 
 
-obstacles = [Rectangle(Vec2(0, 20), Vec2(20, 0), False)]
+class Frame:
+
+    def __init__(self, bg):
+
+        self.bg = ImageTk.PhotoImage(bg)
+        self.dim = (bg.width // 2, bg.height // 2)
+
+        self.canvas = Canvas(window, width=self.dim[0], height=self.dim[1], background='green')
+        self.canvas.pack(side=LEFT, padx=1, pady=1)
+
+        self.canvas.create_image(0, 0, image=self.bg)
+
+
+unit = 56
+height, width = 24, 24
+obstacles = [Rectangle(Vec2(1, height), Vec2(width, 1), False),
+             Rectangle(Vec2(5, 20), Vec2(10, 7))]
 actions = [Vec2(i, j) for i in [-1, 0, 1] for j in [-1, 0, 1]]
-billy = Boat(Vec2(10, 10), Vec2(0, 0))
+billy = Boat(Vec2(width // 2, height // 2), Vec2(0, 0))
+
+background = Image.new('RGB', (height, width), color='red')
+draw = ImageDraw.Draw(background)
+
+for obs in obstacles:
+    if obs.convex:
+        tlc, brc = obs.tlc, obs.brc
+        draw.rectangle([tlc, brc], fill='white')
+
+background.resize((height * unit, width * unit))
+
+window = Tk()
+window.title('Title')
+
+frame = Frame(background)
+
+window.mainloop()
 
 while True:
     action = random.choice(actions)
     for i in range(3):
         billy.apply_action(action)
-        print(billy.p)
+        print(billy.p, billy.v)

@@ -28,7 +28,7 @@ class Mdp:
         self.t = 0
 
         if visual_effect:
-            self.canvas = self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit, background='black')
+            self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit, background='black')
             self.canvas.pack(side=LEFT, padx=1, pady=1)
 
             self.maps = maps
