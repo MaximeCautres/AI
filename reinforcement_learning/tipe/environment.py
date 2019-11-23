@@ -1,40 +1,19 @@
 import random
 import pygame
-from PIL import Image, ImageDraw
-
-
-class Infix:
-
-    def __init__(self, function):
-        self.function = function
-
-    def __ror__(self, other):
-        return Infix(lambda x, self=self, other=other: self.function(other, x))
-
-    def __or__(self, other):
-        return self.function(other)
-
-    def __rlshift__(self, other):
-        return Infix(lambda x, self=self, other=other: self.function(other, x))
-
-    def __rshift__(self, other):
-        return self.function(other)
-
-    def __call__(self, value1, value2):
-        return self.function(value1, value2)
+import numpy as np
 
 
 class Vec2:
 
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self.coord = (x, y)
         self.x = x
         self.y = y
 
-    def sum(self, v):
+    def plus(self, v):
         return Vec2(self.x + v.x, self.y + v.y)
 
-    def dif(self, v):
+    def minus(self, v):
         return Vec2(self.x - v.x, self.y - v.y)
 
     def scale_prod(self, k):
@@ -47,16 +26,10 @@ class Vec2:
         return self.dot_prod(self)**(1/2)
 
     def dist(self, v):
-        return self.dif(v).norm()
+        return self.minus(v).norm()
 
     def __str__(self):
         return "({}, {})".format(self.x, self.y)
-
-
-p = Infix(lambda u, v: u.sum(v))
-m = Infix(lambda u, v: u.dif(v))
-s = Infix(lambda u, k: u.scale_prod(k))
-d = Infix(lambda u, v: u.dist(v))
 
 
 class Rectangle:
@@ -74,59 +47,80 @@ class Rectangle:
 class Boat:
 
     def __init__(self, p0, v0):
-        self.p = p0
-        self.v = v0
+        self.pos = p0
+        self.vel = v0
 
     def apply_action(self, a):
-        np = self.p | p | self.v | p | a
+        new_pos = self.pos.plus(self.vel.plus(a))
         collided = False
         for obstacle in obstacles:
-            collided = collided or obstacle.collide(np)
+            collided = collided or obstacle.collide(new_pos)
         if not collided:
-            self.v = np | m | self.p
-            self.p = np
-            return 6
+            self.vel = new_pos.minus(self.pos)
+            self.pos = new_pos
+            return self.pos.dist(goal)
 
 
-def pil_pyg(v):
-    img = background.copy()
-    img_draw = ImageDraw.Draw(img)
-    img_draw.rectangle([v.x, v.y] * 2, fill='blue')
-    pil_img = img.resize(img_size)
-    mode = pil_img.mode
-    size = pil_img.size
-    data = pil_img.tobytes()
-    return pygame.image.fromstring(data, size, mode)
+def create_background():
+    bg = np.zeros(dims.coord + (3,), dtype=np.int)
+    for i in range(dims.x):
+        for j in range(dims.y):
+            point = Vec2(i, j)
+            if point.dist(goal) < goal_radius:
+                bg[i, j] = GREEN
+            for obs in obstacles:
+                if obs.convex and obs.collide(point):
+                    bg[i, j] = RED
+    return bg
 
+
+def current_frame(point):
+    bg = background.copy()
+    bg[point.x, point.y] = BLUE
+    return bg
+
+
+def numpy_to_pygame(array):
+    surface = pygame.surfarray.make_surface(array)
+    return pygame.transform.scale(surface, img_size)
+
+
+RED = np.array([128, 0, 0])
+GREEN = np.array([0, 128, 0])
+BLUE = np.array([0, 0, 128])
 
 unit = 36
 dims = Vec2(24, 24)
-img_size = (dims | s | unit).coord
-obstacles = [Rectangle(Vec2(0, dims.y-1), Vec2(dims.x-1, 0), False)]
+img_size = (dims.scale_prod(unit)).coord
+
+obstacles = [Rectangle(Vec2(0, dims.y-1), Vec2(dims.x-1, 0), False),
+             Rectangle(Vec2(3, 17), Vec2(5, 15)),
+             Rectangle(Vec2(15, 5), Vec2(17, 3))]
 actions = [Vec2(i, j) for i in [-1, 0, 1] for j in [-1, 0, 1]]
-billy = Boat(Vec2(dims.x // 2, dims.y // 2), Vec2(0, 0))
+billy = Boat(Vec2(dims.x // 3, dims.y // 3), Vec2())
 
-background = Image.new('RGB', dims.coord, color='black')
-bg_draw = ImageDraw.Draw(background)
+goal = Vec2(2 * dims.x // 3, 2 * dims.y // 3)
+goal_radius = 6
 
-for obs in obstacles:
-    if obs.convex:
-        (x0, y0), (x1, y1) = obs.tlc.coord, obs.brc.coord
-        bg_draw.rectangle([x0, y0, x1, y1], fill='red')
+background = create_background()
 
 pygame.init()
+game_state = "in_game"
 screen = pygame.display.set_mode(img_size)
-inGame = True
 
-while inGame:
-    screen.blit(pil_pyg(billy.p), (0, 0))
+while game_state == "in_game":
+    current = current_frame(billy.pos)
+    screen.blit(numpy_to_pygame(current), (0, 0))
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN:
             action = random.choice(actions)
             print(action)
             res = billy.apply_action(action)
-            if not res:
-                inGame = False
+            if res is None:
+                game_state = "loose"
+            elif res < goal_radius:
+                game_state = "win"
     pygame.display.flip()
 
+print(game_state)
 pygame.quit()
