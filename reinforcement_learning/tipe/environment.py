@@ -127,19 +127,34 @@ def simulation(dims, obstacles, p0, v0, goal, goal_radius, life_time, episode_le
                         bg[i, j] = RED
         return bg
 
-    def create_data(cs, res):
-        piece_of_data = []
-        if res == "win":
-            for couple in cs:
-                label = np.zeros((9, 1))
-                label[np.argmax(couple[1]), 0] = 1
-                piece_of_data.append((couple[0], label))
-        elif res == "loose":
-            for couple in cs:
-                label = np.ones((9, 1)) * 1/8
-                label[np.argmax(couple[1]), 0] = 0
-                piece_of_data.append((couple[0], label))
-        return piece_of_data
+    def create_data_set(dat, n):
+        f_stack, l_stack = np.zeros((1152, n)), np.zeros((9, n))
+        k = 0
+
+        for d in dat:
+            res, coups = d
+
+            if res == "win":
+                for couple in coups:
+                    f_occ = couple[0][:, 0]
+                    l_occ = np.zeros(9)
+                    l_occ[np.argmax(couple[1])] = 1
+
+                    f_stack[:, k] = f_occ
+                    l_stack[:, k] = l_occ
+                    k += 1
+
+            elif res == "loose":
+                for couple in coups:
+                    f_occ = couple[0][:, 0]
+                    l_occ = np.ones(9) * 1/8
+                    l_occ[np.argmax(couple[1])] = 0
+
+                    f_stack[:, k] = f_occ
+                    l_stack[:, k] = l_occ
+                    k += 1
+
+        return f_stack, l_stack
 
     def current_frame(point):
         bg = background.copy()
@@ -147,7 +162,7 @@ def simulation(dims, obstacles, p0, v0, goal, goal_radius, life_time, episode_le
         return bg
 
     def numpy_to_pygame(array, size):
-        surface = pygame.surfarray.make_surface(array)
+        surface = pygame.surfarray.make_surface(array * 255)
         return pygame.transform.scale(surface, size)
 
     def makone():
@@ -175,6 +190,7 @@ def simulation(dims, obstacles, p0, v0, goal, goal_radius, life_time, episode_le
                         elif res < goal_radius:
                             game_state = "win"
                 pygame.display.flip()
+            print(game_state)
             pygame.quit()
         else:
             previous = current_frame(billy.pos)
@@ -199,14 +215,15 @@ def simulation(dims, obstacles, p0, v0, goal, goal_radius, life_time, episode_le
     background = create_background()
 
     for epoch in range(epoch_count):
-        data_set = []
+        data = []
+        count = 0
         for episode in range(episode_length):
             result, couples = makone()
-            data_set += create_data(couples, result)
-        for data in data_set:
-            x, y = data
-            a = forward(x)
-            backward(y - a)
+            if result != "in_game":
+                count += len(couples)
+                data.append((result, couples))
+        data_set = create_data_set(data, count)
+        print(forward(data_set[0]))
 
 
 initialize_parameters()
@@ -216,4 +233,4 @@ rectangles = [Rectangle(Vec2(0, dimension.y-1), Vec2(dimension.x-1, 0), False),
               Rectangle(Vec2(15, 5), Vec2(17, 3))]
 init_pos = Vec2(dimension.x // 3, dimension.y // 3)
 goal_pos = Vec2(2 * dimension.x // 3, 2 * dimension.y // 3)
-simulation(dimension, rectangles, init_pos, Vec2(), goal_pos, 6, 10, 6, 6, 3)
+simulation(dimension, rectangles, init_pos, Vec2(), goal_pos, 6, 10, 6, 6)
