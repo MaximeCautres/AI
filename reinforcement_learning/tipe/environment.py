@@ -300,5 +300,5 @@ rectangles = [Rectangle(Vec2(0, dimension.y-1), Vec2(dimension.x-1, 0), False),
               Rectangle(Vec2(3, 17), Vec2(5, 15)),
               Rectangle(Vec2(15, 5), Vec2(17, 3))]
 goal_pos = Vec2(2 * dimension.x // 3, 2 * dimension.y // 3)
-simulation(dimension, rectangles, Vec2(), goal_pos, 6, 10, 128, 128)
+simulation(dimension, rectangles, Vec2(), goal_pos, 6, 10, 64, 64)
 simulation(dimension, rectangles, Vec2(), goal_pos, 6, 10, 1, 6, 36)
