@@ -1,43 +1,8 @@
 import time
 import pygame
 import numpy as np
-from neural_network import *
+from deep_neural_network import *
 import matplotlib.pyplot as plt
-
-
-def numpy_to_pygame(array, size):
-    surface = pygame.surfarray.make_surface(array * 255)
-    return pygame.transform.scale(surface, size)
-
-
-def create_data_set(dat, n):
-    f_stack, l_stack = np.zeros((1250, n)), np.zeros((9, n))
-    k = 0
-
-    for d in dat:
-        res, coups = d
-
-        if res == "win":
-            for couple in coups:
-                f_occ = couple[0][:, 0]
-                l_occ = np.zeros(9)
-                l_occ[np.argmax(couple[1])] = 1
-
-                f_stack[:, k] = f_occ
-                l_stack[:, k] = l_occ
-                k += 1
-
-        elif res == "loose":
-            for couple in coups:
-                f_occ = couple[0][:, 0]
-                l_occ = np.ones(9) * 1/8
-                l_occ[np.argmax(couple[1])] = 0
-
-                f_stack[:, k] = f_occ
-                l_stack[:, k] = l_occ
-                k += 1
-
-    return f_stack, l_stack
 
 
 def mean(array):
@@ -100,14 +65,12 @@ class Vec2:
 
 class Rectangle:
 
-    def __init__(self, tlc, brc, convex=True):
+    def __init__(self, tlc, brc):
         self.tlc = tlc
         self.brc = brc
-        self.convex = convex
 
     def collide(self, v):
-        cond = self.brc.x >= v.x >= self.tlc.x and self.brc.y <= v.y <= self.tlc.y
-        return cond and self.convex or not (cond or self.convex)
+        return self.tlc.x <= v.x <= self.brc.x and self.brc.y <= v.y <= self.tlc.y
 
 
 class Simulation:
@@ -139,15 +102,56 @@ class Simulation:
                     bg[i, j] = self.color_map['goal']
         return bg
 
+    def create_data_set(self, dat, n):
+        action_count = len(self.actions)
+        f_stack, l_stack = np.zeros((1250, n)), np.zeros((action_count, n))
+        k = 0
+
+        for d in dat:
+            res, coups = d
+            if res == "win":
+                for couple in coups:
+                    f_occ = couple[0][:, 0]
+                    l_occ = np.zeros(action_count)
+                    l_occ[np.argmax(couple[1])] = 1
+                    f_stack[:, k] = f_occ
+                    l_stack[:, k] = l_occ
+                    k += 1
+            elif res == "loose":
+                for couple in coups:
+                    f_occ = couple[0][:, 0]
+                    l_occ = np.ones(action_count) * 1 / (action_count-1)
+                    l_occ[np.argmax(couple[1])] = 0
+                    f_stack[:, k] = f_occ
+                    l_stack[:, k] = l_occ
+                    k += 1
+
+        return f_stack, l_stack
+
+    def numpy_to_pygame(self, source, size):
+        array = source.copy()
+        for a in self.actions:
+            p = self.get_next_pos(a)
+            if self.is_in_screen(p):
+                array[p.x, p.y] = min(1, array[p.x, p.y] + 0.25)
+        surface = pygame.surfarray.make_surface(array * 255)
+        return pygame.transform.scale(surface, size)
+
+    def is_in_screen(self, v):
+        return 0 <= v.x < self.dims.x and 0 <= v.y < self.dims.y
+
     def get_spawn(self):
         pos = None
         while self.type_touched(pos):
             pos = Vec2(np.random.randint(self.dims.x), np.random.randint(self.dims.y))
         return pos
 
+    def get_next_pos(self, a):
+        return self.boat_pos.plus(self.boat_vel.plus(a))
+
     def apply_action(self, a):
-        new_pos = self.boat_pos.plus(self.boat_vel.plus(a))
-        collided = False
+        new_pos = self.get_next_pos(a)
+        collided = not self.is_in_screen(new_pos)
         for obs in self.obs:
             collided = collided or obs.collide(new_pos)
         if not collided:
@@ -161,7 +165,7 @@ class Simulation:
         if v.dist(self.goal) < self.goal_radius:
             return 'goal'
         for obs in self.obs:
-            if obs.convex and obs.collide(v):
+            if obs.collide(v):
                 return 'obst'
 
     def current_frame(self, point):
@@ -198,7 +202,7 @@ class Simulation:
             img_size = self.dims.scale_prod(self.unit).coord
             screen = pygame.display.set_mode(img_size)
             while game_state == "in_game" and life < self.life_time:
-                screen.blit(numpy_to_pygame(current, img_size), (0, 0))
+                screen.blit(self.numpy_to_pygame(current, img_size), (0, 0))
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         previous, current, game_state, _ = self.make_a_move(parameters, previous, current)
