@@ -1,7 +1,6 @@
 import time
 import pygame
-import numpy as np
-from deep_neural_network import *
+from convolutional_neural_network import *
 import matplotlib.pyplot as plt
 
 
@@ -240,7 +239,7 @@ class Simulation:
 
             win_rates.append(win_count / episode_length)
             if data:
-                data_set = create_data_set(data, count)
+                data_set = self.create_data_set(data, count)
                 gradients = backward(parameters, *data_set)
                 parameters = update_parameters(parameters, gradients, 10**-1)
             if not epoch % batch:

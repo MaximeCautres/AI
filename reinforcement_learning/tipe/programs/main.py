@@ -2,7 +2,7 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_2'
+file_name = 'parameters_1'
 import_file = True
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
@@ -21,6 +21,9 @@ if import_file:
     simulation.play(parameters, 24)
 else:
     topology = (dimension.x * dimension.y * 2, 128, len(actions))
-    parameters = initialize_parameters(topology)
+    parameters = initialize_parameters_dnn(topology)
     parameters = simulation.train(parameters, 128, 2**17, 2**10)
     pickle.dump(parameters, open(file_name, 'wb'))
+
+topology_cnn = [('convolution', n, (w, h)), ('poling', 'max', (sx, sy), (p, q))]
+para_cnn = {'lt1': 'convol', 'kc1': n, 'kd1': (w, h), 'lt2': 'poling', 'pf2': 'max', 'ss1': (sx, sy), 'pd2': (p, q)}
