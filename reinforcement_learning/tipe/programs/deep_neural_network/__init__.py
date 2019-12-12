@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def initialize_parameters(topology):
+def initialize_parameters_dnn(topology):
     parameters = {'layers': topology, 'L': len(topology)}
     for l in range(1, parameters['L']):
         cond = l < parameters['L'] - 1
