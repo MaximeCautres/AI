@@ -2,8 +2,8 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_2'
-import_file = True
+file_name = 'parameters_0'
+import_file = False
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
 actions = [Vec2(i, j) for i in [-1, 0, 1] for j in [-1, 0, 1]]
@@ -22,5 +22,5 @@ if import_file:
 else:
     topology = (dimension.x * dimension.y * 2, 128, len(actions))
     parameters = initialize_parameters(topology)
-    parameters = simulation.train(parameters, 128, 2**17, 2**10)
+    parameters = simulation.train(parameters, 128, 2**9, 2**4)
     pickle.dump(parameters, open(file_name, 'wb'))

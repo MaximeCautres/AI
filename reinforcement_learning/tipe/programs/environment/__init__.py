@@ -1,7 +1,6 @@
 import time
 import pygame
-import numpy as np
-from deep_neural_network import *
+from convolutional_neural_network import *
 import matplotlib.pyplot as plt
 
 
@@ -14,7 +13,7 @@ def variance(array):
     return mean(array_square) - mean(array) ** 2
 
 
-def show_stats(stats, t):
+def show_stats_variance(stats, t):
     fig, ax1 = plt.subplots()
 
     color = 'tab:red'
@@ -31,6 +30,15 @@ def show_stats(stats, t):
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()
+    plt.show()
+
+
+def show_stats_minmax(stats, t):
+    plt.plot(t, stats['max'], color='red')
+    plt.plot(t, stats['mean'], color='blue')
+    plt.plot(t, stats['min'], color='green')
+    plt.ylabel("Win rate")
+    plt.xlabel("Iteration")
     plt.show()
 
 
@@ -213,15 +221,15 @@ class Simulation:
         else:
             while game_state == "in_game" and life < self.life_time:
                 previous, current, game_state, couple = self.make_a_move(parameters, previous, current)
-                life += 1
                 episode_couples.append(couple)
+                life += 1
 
         return game_state, episode_couples
 
     def train(self, parameters, episode_length, epoch_count, batch):
 
         time_point = time.time()
-        stats = {'mean': [], 'variance': []}
+        stats = {'mean': [], 'variance': [], 'min': [], 'max': []}
         win_rates = []
 
         for epoch in range(1, epoch_count + 1):
@@ -240,20 +248,24 @@ class Simulation:
 
             win_rates.append(win_count / episode_length)
             if data:
-                data_set = create_data_set(data, count)
+                data_set = self.create_data_set(data, count)
                 gradients = backward(parameters, *data_set)
                 parameters = update_parameters(parameters, gradients, 10**-1)
             if not epoch % batch:
                 m = mean(win_rates)
                 v = variance(win_rates)
+                mi = min(win_rates)
+                ma = max(win_rates)
                 stats['mean'].append(m)
                 stats['variance'].append(v)
+                stats['min'].append(mi)
+                stats['max'].append(ma)
                 win_rates = []
-                print("Epoch {} : mean = {} -- variance = {}".format(epoch, m, v))
+                print("Epoch {} : {} %".format(epoch, round(m * 100, 2)))
 
         delta = time.gmtime(time.time() - time_point)
         print("Finished in {0} hour(s) {1} minute(s) {2} second(s).".format(delta.tm_hour, delta.tm_min, delta.tm_sec))
-        show_stats(stats, (np.arange(epoch_count // batch) + 1) * batch)
+        show_stats_minmax(stats, (np.arange(epoch_count // batch) + 1) * batch)
 
         return parameters
 
