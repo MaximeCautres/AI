@@ -25,5 +25,10 @@ else:
     parameters = simulation.train(parameters, 128, 2**9, 2**4)
     pickle.dump(parameters, open(file_name, 'wb'))
 
-# topology_cnn = [('convolution', n, (w, h)), ('poling', 'max', (sx, sy), (p, q))]
-# para_cnn = {'lt1': 'convol', 'kc1': n, 'kd1': (w, h), 'lt2': 'poling', 'pf2': 'max', 'ss1': (sx, sy), 'pd2': (p, q)}
+# else:
+#     parameters = {'L': 3, 'id': [25, 25, 2],
+#                   'lt1': 'c', 'kd1': (3, 3, 4),
+#                   'lt2': 'p', 'ss2': (2, 2), 'pd2': (3, 3)}
+#     parameters = initialize_parameters_cnn(parameters)
+#     parameters = simulation.train(parameters, 128, 2**9, 2**4)
+#     pickle.dump(parameters, open(file_name, 'wb'))

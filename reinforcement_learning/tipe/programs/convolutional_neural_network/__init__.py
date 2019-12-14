@@ -2,143 +2,166 @@ from deep_neural_network import *
 import numpy as np
 
 
-def initialize_parameters_cnn(topology):
+def initialize_parameters_cnn(parameters):
     """
-    here, it is define all the parameters of the convolutional neural network.
+    Create the parameters we need to train
+
+    Take :
+    parameters -- dictionary containing the whole network
+
+    Notation :
     - L: number of layer in the CNN
-    - lt: the layer type: convolutional or pooling
-    - kc: kernel count
-    - kd: (kernel width, kernel height, kernel depth)
-    - afc: activation function of the pooling layer
-    - plf: pooling function of the pooling layer
-    - ps: (stride w, stride h)
-    - pd: (pooling format w, polling format h)
-    return: the initialized parameters of the CNN
+    - lt: the layer type -> 'c' or 'p'
+    - kd: kernel dimensions - > (k_w, k_h, k_c)
+    - ps: stride -> (s_x, s_y)
+    - pd: pooling dimensions -> (p_w, p_h)
+    - af: pooling activation function -> 'relu'
+    - pf: pooling function -> 'min' or 'max' or 'mean'
+
+    Return :
+    parameters -- dictionary containing the whole network
     """
-    parameters = {'L': len(topology)}
-    i = 0
+
+    current = parameters['id']
     for l in range(1, parameters['L']):
-        if topology[l][0] == 'convolution':
-            parameters['lt' + str(l)] = 'convolution'
-            parameters['kc' + str(l)] = topology[l][1]
-            parameters['kd' + str(l)] = (*topology[l][2], parameters['kc' + str(i)] * (i != 0) + (i == 0) * 2)
-            parameters['k' + str(l)] = np.random.randn(*topology[l][1:3], parameters['kd' + str(l), 1])
-            i = l
+        if parameters['lt' + str(l)] == 'c':
+            k_d = current[2]
+            k_w, k_h, k_c = parameters['kd' + str(l)]
+            parameters['k' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1)
+            current[2] = k_c
         else:
-            parameters['lt' + str(l)] = 'pooling'
-            parameters['afc' + str(l)] = 'relu'
-            parameters['plf' + str(l)] = topology[l][1]
-            parameters['ps' + str(l)] = topology[l][2]
-            parameters['pd' + str(l)] = topology[l][3]
+            s_x, s_y = parameters['ss' + str(l)]
+            p_w, p_h = parameters['pd' + str(l)]
+            w, h = current[:2]
+            pr_x = [x for x in range(w) if not (x % s_x) and x + p_w <= w or x + p_w == w]
+            pr_y = [y for y in range(h) if not (y % s_y) and y + p_h <= h or y + p_h == h]
+            parameters['af' + str(l)] = 'relu'
+            parameters['pf' + str(l)] = 'max'
+            parameters['pr' + str(l)] = (pr_x, pr_y)
+            current[:2] = [len(pr_x), len(pr_y)]
+
     return parameters
 
 
-def convolve(A, W):
+def convolve(A, K):
     """
-    Apply weights and biases on A
+    Make a convolution of K on A by applying the zero padding method
 
     Take :
-    A -- numpy matrix, non linear values of the previous layer (w_A, h_A, d, n)
-    W -- numpy matrix, weights to apply (count, w_W, h_W, d, 1)
-
+    A -- previous layer image -> (w_A, h_A, d, n)
+    K -- kernel to apply -> (w_K, h_K, d, count, 1)
 
     Return :
-    Z -- numpy matrix, linear values of the current layer (w_Z, h_Z, count, n) by applying the zero padding method
+    Z -- current layer image -> (w_Z, h_Z, count, n)
     """
-    w_A, h_A, _, _ = A.shape
-    count, w_W, h_W, _, _ = W.shape
-    Z = np.zeros((w_A + w_W - 1, h_A + h_W - 1, count, A.shape[3]))
 
-    for k in range(count):
-        for w in range(1 - w_W, w_A):
-            for h in range(1 - h_W, h_A):
-                Z[w + w_W - 1, h + h_W - 1, k] += np.sum(A[max(w, 0):min(w + w_W, w_A), max(h, 0):min(h + h_W, h_A)] *
-                                     W[k][max(0, -w):min(w_W, w_A-w), max(0, -h):min(h_W, h_A-h)], axis=(0, 1, 2))
+    w_A, h_A, d, n = A.shape
+    w_K, h_K, _, count, _ = K.shape
+    Z = np.zeros((w_A + w_K - 1, h_A + h_K - 1, count, n))
+    A_ = A.reshape(w_A, h_A, d, 1, n)
+
+    for x in range(1 - w_K, w_A):
+        A_x = A_[max(x, 0):min(x + w_K, w_A)]
+        K_x = K[max(0, -x):min(w_K, w_A - x)]
+        for y in range(1 - h_K, h_A):
+            prod = A_x[:, max(y, 0):min(y + h_K, h_A)] \
+                   * K_x[:, max(0, -y):min(h_K, h_A - y)]
+            Z[x, y] = np.sum(prod, axis=(0, 1, 2))
+
     return Z
 
 
-def pool(A, stride, pooling_format, pool_function):
+def pool(A, pr, pd, pf, af):
     """
-    Compute the pooling operation to an entry image A with the chosen stride and pooling format.
+    Pool A
 
-    - w_A, h_A: image format
-    - psw, psh: stride on each direction
-    - pw, ph: format pf the pooling on each direction
-    - lw, lh: the list of w, h positions where the pooling will be applied
+    Take :
+    A -- previous layer image -> (w_A, h_A, d, n)
+    pr -- pooling ranges -> (pr_x, pr_y)
+    pd -- pooling dimensions -> (p_w, p_h)
+    pf -- pooling function -> 'min' or 'max' or 'mean'
+    af -- activation function -> 'relu'
 
     Return :
-    Z -- numpy matrix, after the applying of the activation function
+    Z -- current layer image -> (w_Z, h_Z, d, n)
     """
 
-    w_A, h_A, count, _ = A.shape
-    psw, psh = stride
-    pw, ph = pooling_format
+    w_A, h_A, d, n = A.shape
+    pr_x, pr_y = pr
+    p_w, p_h = pd
+    w_Z, h_Z = len(pr_x), len(pr_y)
+    Y = np.zeros((w_Z, h_Z, d, n))
 
-    lw = [0]
-    cw = psw
-    while cw + pw < w_A:
-        lw.append(cw)
-        cw += psw
-    if cw != w_A:
-        lw.append(w_A - pw)
+    for i in range(w_Z):
+        x = pr_x[i]
+        for j in range(h_Z):
+            y = pr_y[j]
+            X = A[x:x + p_w, y:y + p_h]
+            if pf == 'min':
+                Y[i, j] = pool_min(X)
+            elif pf == 'max':
+                Y[i, j] = pool_max(X)
+            elif pf == 'mean':
+                Y[i, j] = pool_mean(X)
 
-    lh = [0]
-    ch = psw
-    while ch + ph < h_A:
-        lh.append(cw)
-        ch += psw
-    if ch != h_A:
-        lh.append(h_A - ph)
+    Z = None
+    if af == 'relu':
+        Z = relu(Y)
 
-    Z = np.zeros((len(lw), len(lh), count, A.shape[3]))
-    pos = np.zeros((len(lw), len(lh), count, A.shape[3]))
-    for w in range(len(lw)):
-        for h in range(len(lh)):
-            if pool_function == 'max':
-                Z[w, h], pos[w, h] = arg_max_mult(A[w:w+pw, h:h+ph])
-            elif pool_function == 'min':
-                Z[w, h], pos[w, h] = arg_min_mult(A[w:w+pw, h:h+ph])
-            else:
-                Z[w, h], pos[w, h] = average_mult(A[w:w+pw, h:h+ph]), None
-
-    return Z, pos, lw, lh
-
-def arg_max_mult(A):
-    w_A, h_A, d_A, count = A.shape
-
-    result = np.zeros((d_A, count)) + A[0, 0, 0, 0]
-    pos = np.zeros((d_A, count, 4))
-    w_coor = np.argmax(A, 0)
-    h_coor = np.argmax(A, 1)
-
-    result[d, c] = A[x, y, d, c]
-    pos[d, c] = [x, y, d, c]
-    return result, pos
+    return Z
 
 
-def arg_min_mult(A):
-    w_A, h_A, d_A, count = A.shape
+def pool_min(X):
+    """
+    Apply a pool_min on X
 
-    result = np.zeros((d_A, count)) + A[0, 0, 0, 0]
-    pos = np.zeros((d_A, count, 4))
-    for c in range(count):
-        for d in range(d_A):
-            for x in range(w_A):
-                for y in range(h_A):
-                    if A[x, y, d, c] < result[d, c]:
-                        result[d, c] = A[x, y, d, c]
-                        pos[d, c] = [x, y, d, c]
-    return result, pos
+    Take :
+    X -- image -> (w_X, h_X, d, n)
+
+    Return :
+    Y -- pooled_min image -> (1, 1, d, n)
+    """
+
+    _, _, d, n = X.shape
+    X_bread = X.reshape(-1, d, n)
+    X_min = np.argmin(X_bread, axis=0).reshape((1, 1, d, n))
+    Y = np.min(X_bread, axis=0, keepdims=True)
+
+    return Y
 
 
-def average_mult(A):
-    w_A, h_A, d_A, count = A.shape
+def pool_max(X):
+    """
+    Apply a pool_max on X
 
-    result = np.zeros((d_A, count)) + A[0, 0, 0, 0]
-    for c in range(count):
-        for d in range(d_A):
-            for x in range(w_A):
-                for y in range(h_A):
-                    result[d, c] += A[x, y, d, c]
-    return result
+    Take :
+    X -- image -> (w_X, h_X, d, n)
 
+    Return :
+    Y -- pooled_max image -> (1, 1, d, n)
+    """
+
+    _, _, d, n = X.shape
+    X_bread = X.reshape(-1, d, n)
+    X_max = np.argmax(X_bread, axis=0).reshape((1, 1, d, n))
+    Y = np.max(X_bread, axis=0, keepdims=True)
+
+    return Y
+
+
+def pool_mean(X):
+    """
+    Apply a pool_mean on X
+
+    Take :
+    X -- image -> (w_X, h_X, d, n)
+
+    Return :
+    Y -- pooled_mean image -> (1, 1, d, n)
+    """
+
+    _, _, d, n = X.shape
+    X_bread = X.reshape(-1, d, n)
+    Y = np.mean(X_bread, axis=0, keepdims=True)
+
+    return Y
