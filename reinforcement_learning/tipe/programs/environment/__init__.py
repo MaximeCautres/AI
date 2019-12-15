@@ -182,7 +182,7 @@ class Simulation:
         return bg
 
     def make_a_move(self, parameters, previous, current):
-        array = np.append(np.reshape(previous, 625), np.reshape(current, 625)).reshape(1250, 1)
+        array = np.append(previous.reshape(25, 25, 1, 1), current.reshape(25, 25, 1, 1), axis=2)
         a = forward(parameters, array)
         action = self.actions[int(np.argmax(a))]
         previous = current
