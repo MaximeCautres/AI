@@ -29,5 +29,5 @@ else:
 
     # simulation.play(parameters, 24)
 
-    parameters = simulation.train(parameters, 128, 2**9, 2**2)
-    # pickle.dump(parameters, open(file_name, 'wb'))
+    parameters = simulation.train(parameters, 6, 2**7, 2**3)
+    pickle.dump(parameters, open(file_name, 'wb'))

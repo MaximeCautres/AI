@@ -104,7 +104,7 @@ def forward(parameters, X, return_cache=False):
 
 def backward(parameters, X, y):
     gradients = {}
-    n = X.shape[1]
+    n = X.shape[3]
     cache = forward(parameters, X, True)
     y_hat = cache['a' + str(parameters['Ld'] - 1)]
 
@@ -137,8 +137,10 @@ def backward(parameters, X, y):
             dA, dK = deconvolve(dA, K, A_p)
             gradients['dK' + str(l)] = dK
         else:
-            Y_p = cache['Y' + str(l - 1)]
-            dA = depool(dA, Y_p)
+            Y_p = cache['Y' + str(l)]
+            pr, pd = parameters['pr' + str(l)], parameters['pd' + str(l)]
+            pf, af = parameters['pf' + str(l)], parameters['afc' + str(l)]
+            dA = depool(dA, Y_p, pr, pd, pf, af)
             gradients['dA' + str(l)] = dA
 
     return gradients
@@ -270,7 +272,6 @@ def depool(dZ, Y_p, pr, pd, pf, af):
     pf -- pooling function -> 'min' or 'max' or 'mean'
     af -- activation function -> 'relu'
 
-
     Return :
     dA -- previous layer gradient image -> (w_A, h_A, d, n)
     """
@@ -282,7 +283,7 @@ def depool(dZ, Y_p, pr, pd, pf, af):
     dA = np.zeros((pr_x[-1] + pd_x, pr_y[-1] + pd_y, d, n))
 
     dY = None
-    if af == relu:
+    if af == 'relu':
         dY = relu_prime(Y_p) * dZ
 
     for x in range(w_Z):

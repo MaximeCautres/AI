@@ -114,7 +114,6 @@ class Simulation:
         action_count = len(self.actions)
         f_stack, l_stack = np.zeros((25, 25, 2, n)), np.zeros((action_count, n))
         k = 0
-        print(n)
         for d in dat:
             res, coups = d
             if res == "win":
