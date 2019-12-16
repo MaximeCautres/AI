@@ -214,7 +214,7 @@ def pool(A, pr, pd, pf, af):
     if af == 'relu':
         Z = relu(Y)
 
-    return Z
+    return Y, Z
 
 
 def deconvolve(dZ, K, A_p):
@@ -254,16 +254,24 @@ def deconvolve(dZ, K, A_p):
     return dA, dK
 
 
-def depool(dZ):
+def depool(dZ, pr, pd, pf, af, Y_p, A_p ):
     """
     Depool dZ
 
     Take :
     dZ -- current layer gradient image -> (w_Z, h_Z, count, n)
+    pr -- pooling ranges -> (pr_x, pr_y)
+    pd -- pooling dimensions -> (p_w, p_h)
+    pf -- pooling function -> 'min' or 'max' or 'mean'
+    af -- activation function -> 'relu'
+    Y_p -- previous intermediate image -> (w_Z, h_Z, count, n)
+    A_p -- previous layer image -> (w_A, h_A, d, n)
 
     Return :
     dA -- previous layer gradient image -> (w_A, h_A, d, n)
     """
+
+    w_Z, h_Z, count, n = dZ.shape
 
     return dA
 
