@@ -18,7 +18,7 @@ simulation = Simulation(*arguments)
 
 if import_file:
     parameters = pickle.load(open(file_name, 'rb'))
-    simulation.play(parameters, 24)
+    simulation.play(parameters, 12)
 
 else:
     parameters = {'Lc': 3, 'idi': (dimension.x, dimension.y, 2),
@@ -26,7 +26,8 @@ else:
                   'lt2': 'p', 'ss2': (2, 2), 'pd2': (3, 3)}
     dnn_topology = (13 * 13 * 4, 64, len(actions))
     parameters = initialize_parameters(parameters, dnn_topology)
-    simulation.play(parameters, 24)
 
-    # parameters = simulation.train(parameters, 128, 2**9, 2**4)
+    # simulation.play(parameters, 24)
+
+    parameters = simulation.train(parameters, 128, 2**9, 2**2)
     # pickle.dump(parameters, open(file_name, 'wb'))

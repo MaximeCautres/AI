@@ -36,7 +36,7 @@ def initialize_parameters(parameters, dnn_topology):
             pr_x = [x for x in range(w) if not (x % s_x) and x + p_w <= w or x + p_w == w]
             pr_y = [y for y in range(h) if not (y % s_y) and y + p_h <= h or y + p_h == h]
             parameters['afc' + str(l)] = 'relu'
-            parameters['pf' + str(l)] = 'max'
+            parameters['pf' + str(l)] = 'mean'
             parameters['pr' + str(l)] = (pr_x, pr_y)
             current[:2] = [len(pr_x), len(pr_y)]
 
@@ -76,7 +76,8 @@ def forward(parameters, X, return_cache=False):
         else:
             pr, pd = parameters['pr' + str(l)], parameters['pd' + str(l)]
             pf, af = parameters['pf' + str(l)], parameters['afc' + str(l)]
-            A = pool(A, pr, pd, pf, af)
+            Y, A = pool(A, pr, pd, pf, af)
+            cache['Y' + str(l)] = Y
 
     a = A.reshape(-1, n)
     cache['a0'] = a
@@ -136,7 +137,9 @@ def backward(parameters, X, y):
             dA, dK = deconvolve(dA, K, A_p)
             gradients['dK' + str(l)] = dK
         else:
-            dA = depool(dA)
+            Y_p = cache['Y' + str(l - 1)]
+            dA = depool(dA, Y_p)
+            gradients['dA' + str(l)] = dA
 
     return gradients
 
@@ -238,40 +241,59 @@ def deconvolve(dZ, K, A_p):
     dK = np.zeros((w_K, h_K, d, count, 1))
     A_p_ = A_p.reshape(w_A, h_A, d, 1, n)
 
-    for x in range(1 - w_K, w_Z):
-        K_x = K[max(0, -x):min(w_K, w_Z - x)]
-        for y in range(1 - h_K, h_Z):
-            dZ_ = dZ[x + w_K - 1, y + h_K - 1].reshape(1, 1, 1, count, n)
+    for x in range(w_Z):
+        K_x = K[max(0, w_K - 1 - x):min(w_K, w_Z - x)]
+        A_p_x = A_p_[max(x - w_K + 1, 0):min(x + 1, w_A)]
+        for y in range(h_Z):
+            dZ_ = dZ[x, y].reshape(1, 1, 1, count, n)
 
-            prod_dA = dZ_ * K_x[:, max(0, -y):min(h_K, h_Z - y)]
-            dA[max(x, 0):min(x + w_K, w_A), max(y, 0):min(y + h_K, h_A)] \
+            prod_dA = dZ_ * K_x[:, max(0, h_K - 1 - y):min(h_K, h_Z - y)]
+            dA[max(x - w_K + 1, 0):min(x + 1, w_A), max(y - h_K + 1, 0):min(y + 1, h_A)] \
                 += np.sum(prod_dA, axis=3)
 
-            prod_dK = dZ_ * A_p_[max(x, 0):min(x + w_K, w_A), max(y, 0):min(y + h_K, h_A)]
-            dK[max(0, -x):min(w_K, w_Z - x), max(0, -y):min(h_K, h_Z - y)] \
+            prod_dK = dZ_ * A_p_x[:, max(y - h_K + 1, 0):min(y + 1, h_A)]
+            dK[max(0, w_K - 1 - x):min(w_K, w_Z - x), max(0, h_K - 1 - y):min(h_K, h_Z - y)] \
                 += np.mean(prod_dK, axis=4, keepdims=True)
 
     return dA, dK
 
 
-def depool(dZ, pr, pd, pf, af, Y_p, A_p ):
+def depool(dZ, Y_p, pr, pd, pf, af):
     """
     Depool dZ
 
     Take :
-    dZ -- current layer gradient image -> (w_Z, h_Z, count, n)
+    dZ -- current layer gradient image -> (w_Z, h_Z, d, n)
+    Y_p -- previous linear image -> (w_Z, h_Z, d, n)
     pr -- pooling ranges -> (pr_x, pr_y)
     pd -- pooling dimensions -> (p_w, p_h)
     pf -- pooling function -> 'min' or 'max' or 'mean'
     af -- activation function -> 'relu'
-    Y_p -- previous intermediate image -> (w_Z, h_Z, count, n)
-    A_p -- previous layer image -> (w_A, h_A, d, n)
+
 
     Return :
     dA -- previous layer gradient image -> (w_A, h_A, d, n)
     """
 
-    w_Z, h_Z, count, n = dZ.shape
+    w_Z, h_Z, d, n = dZ.shape
+    pr_x, pr_y = pr
+    pd_x, pd_y = pd
+    area = pd_x * pd_y
+    dA = np.zeros((pr_x[-1] + pd_x, pr_y[-1] + pd_y, d, n))
+
+    dY = None
+    if af == relu:
+        dY = relu_prime(Y_p) * dZ
+
+    for x in range(w_Z):
+        for y in range(h_Z):
+            dY_ = dY[x, y].reshape(1,1, d, n)
+            if pf == 'min':
+                pass
+            elif pf == 'max':
+                pass
+            elif pf == 'mean':
+                dA[pr_x[x]:pr_x[x] + pd_x, pr_y[y]:pr_y[y] + pd_y] += dY_ / area
 
     return dA
 

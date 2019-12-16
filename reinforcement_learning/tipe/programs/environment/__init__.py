@@ -112,25 +112,25 @@ class Simulation:
 
     def create_data_set(self, dat, n):
         action_count = len(self.actions)
-        f_stack, l_stack = np.zeros((1250, n)), np.zeros((action_count, n))
+        f_stack, l_stack = np.zeros((25, 25, 2, n)), np.zeros((action_count, n))
         k = 0
-
+        print(n)
         for d in dat:
             res, coups = d
             if res == "win":
                 for couple in coups:
-                    f_occ = couple[0][:, 0]
+                    f_occ = couple[0].reshape(25, 25, 2)
                     l_occ = np.zeros(action_count)
                     l_occ[np.argmax(couple[1])] = 1
-                    f_stack[:, k] = f_occ
+                    f_stack[:, :, :, k] = f_occ
                     l_stack[:, k] = l_occ
                     k += 1
             elif res == "loose":
                 for couple in coups:
-                    f_occ = couple[0][:, 0]
+                    f_occ = couple[0].reshape(25, 25, 2)
                     l_occ = np.ones(action_count) * 1 / (action_count-1)
                     l_occ[np.argmax(couple[1])] = 0
-                    f_stack[:, k] = f_occ
+                    f_stack[:, :, :, k] = f_occ
                     l_stack[:, k] = l_occ
                     k += 1
 
