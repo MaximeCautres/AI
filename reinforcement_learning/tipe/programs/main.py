@@ -3,7 +3,7 @@ from environment import *
 
 
 file_name = 'parameters_0'
-import_file = False
+import_file = True
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
 actions = np.array([[i, j] for i in [-1, 0, 1] for j in [-1, 0, 1]])
@@ -13,7 +13,8 @@ simulation = Simulation(dimension, color_map, actions, 12, 36)
 
 if import_file:
     parameters = pickle.load(open(file_name, 'rb'))
-    simulation.play(parameters, 12)
+    print(parameters)
+    # simulation.play(parameters, 12)
 
 else:
     parameters = {'Lc': 3, 'idi': dimension[:2] + (2,),

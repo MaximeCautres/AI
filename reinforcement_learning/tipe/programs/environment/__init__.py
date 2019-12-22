@@ -109,21 +109,21 @@ class Simulation:
 
         return win, loose
 
-    def transform(self, array, result):
+    def transform(self, array_in, result='None'):
 
-        array = array.flatten()
+        array = np.moveaxis(array_in, -1, 1).reshape(*((-1,) + array_in.shape[1:-1]))
         ac = self.actions.shape[0]
         k = array.size
-        label = None
+        array_out = array
 
         if result == 'win':
-            label = np.zeros((k, ac))
-            label[range(k), array] = 1
+            array_out = np.zeros((k, ac))
+            array_out[range(k), array] = 1
         elif result == 'loose':
-            label = np.full((k, ac), 1 / (ac - 1))
-            label[range(k), array] = 0
+            array_out = np.full((k, ac), 1 / (ac - 1))
+            array_out[range(k), array] = 0
 
-        return list(label)
+        return list(array_out)
 
     def make_a_batch(self, parameters, n, p=2, q=1):
 
@@ -158,7 +158,7 @@ class Simulation:
             in_game = [i for i in range(self.igc) if not (i in win or i in loose)]
             self.igc = len(in_game)
 
-            features += list(np.moveaxis(log_img[:, :, :, :, win + loose], 0, -1).reshape(-1, w, h, 2 * d))
+            features += self.transform(log_img[..., win]) + self.transform(log_img[..., loose])
             labels += self.transform(log_act[:, win], 'win') + self.transform(log_act[:, loose], 'loose')
 
             self.obs = self.obs[..., in_game]
@@ -169,7 +169,7 @@ class Simulation:
             previous = np.moveaxis(log_img[-1, ..., d:, in_game], 0, -1)
 
             new_img = np.concatenate((previous, current), axis=2).reshape(1, w, h, 2 * d, self.igc)
-            log_img = np.concatenate((log_img[:, :, :, :, in_game], new_img), axis=0)
+            log_img = np.concatenate((log_img[..., in_game], new_img), axis=0)
             log_act = log_act[:, in_game]
 
         return np.moveaxis(features, 0, -1), np.moveaxis(labels, 0, -1), win_count / n
@@ -200,3 +200,5 @@ class Simulation:
         delta = time.gmtime(time.time() - time_point)
         print("Finished in {0} hour(s) {1} minute(s) {2} second(s).".format(delta.tm_hour, delta.tm_min, delta.tm_sec))
         show_stats(stats, (np.arange(epoch_count // print_length) + 1) * print_length)
+
+        return parameters
