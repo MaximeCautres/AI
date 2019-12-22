@@ -27,7 +27,7 @@ def initialize_parameters(parameters, dnn_topology):
         if parameters['lt' + str(l)] == 'c':
             w, h, k_d = current
             k_w, k_h, k_c = parameters['kd' + str(l)]
-            parameters['k' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1)
+            parameters['K' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1)
             current = [w + k_w - 1, h + k_h - 1, k_c]
         else:
             s_x, s_y = parameters['ss' + str(l)]
@@ -70,7 +70,7 @@ def forward(parameters, X, return_cache=False):
 
     for l in range(1, parameters['Lc']):
         if parameters['lt' + str(l)] == 'c':
-            K = parameters['k' + str(l)]
+            K = parameters['K' + str(l)]
             cache['A' + str(l-1)] = A
             A = convolve(A, K)
         else:
@@ -132,7 +132,7 @@ def backward(parameters, X, y):
 
     for l in reversed(range(1, parameters['Lc'])):
         if parameters['lt' + str(l)] == 'c':
-            K = parameters['k' + str(l)]
+            K = parameters['K' + str(l)]
             A_p = cache['A' + str(l - 1)]
             dA, dK = deconvolve(dA, K, A_p)
             gradients['dK' + str(l)] = dK
@@ -147,6 +147,9 @@ def backward(parameters, X, y):
 
 
 def update_parameters(parameters, gradients, alpha):
+    for l in range(1, parameters['Lc']):
+        if parameters['lt' + str(l)] == 'c':
+            parameters['K' + str(l)] -= alpha * gradients['dK' + str(l)]
     for l in range(1, parameters['Ld']):
         parameters['w' + str(l)] -= alpha * gradients['dw' + str(l)]
         parameters['b' + str(l)] -= alpha * gradients['db' + str(l)]
