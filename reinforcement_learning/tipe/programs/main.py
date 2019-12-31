@@ -1,9 +1,10 @@
 import pickle
 from environment import *
+import matplotlib.pyplot as plt
 
 
 file_name = 'parameters_0'
-import_file = True
+import_file = False
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
 actions = np.array([[i, j] for i in [-1, 0, 1] for j in [-1, 0, 1]])
@@ -23,7 +24,5 @@ else:
     dnn_topology = (13 * 13 * 4, 64, len(actions))
     parameters = initialize_parameters(parameters, dnn_topology)
 
-    # simulation.play(parameters, 24)
-
-    parameters = simulation.train(parameters, 10**-1, 6, 2**11, 2**4)
-    pickle.dump(parameters, open(file_name, 'wb'))
+    parameters = simulation.train(parameters, 10**-1, 256, 2**17, 2**6)
+    #pickle.dump(parameters, open(file_name, 'wb'))

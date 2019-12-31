@@ -52,14 +52,14 @@ data_base_name = 'mnist'
 
 image_dimension = (28, 28, 1)
 
-epoch_count = 16
-batch_length = 256
+epoch_count = 32
+batch_length = 64
 alpha = 10**(-3)
 
 parameters = {'Lc': 0, 'idi': image_dimension[:2] + (1,),
               'lt1': 'c', 'kd1': (3, 3, 4),
               'lt2': 'p', 'ss2': (3, 3), 'pd2': (4, 4)}
-dnn_topology = (784, 64, 10)
+dnn_topology = (784, 150, 10)
 
 parameters = initialize_parameters(parameters, dnn_topology)
 

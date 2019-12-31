@@ -126,7 +126,24 @@ class Simulation:
         return list(array_out)
 
     def make_a_batch(self, parameters, n, p=2, q=1):
+        """
+        This function creates the experience batches used in the policy gradient algorithm.
+        - w, h, d -- dimension of the map's image
+        - igc -- current number of in game parties
+        - goal -- (4, q, n)
+        - pos -- (2, 1, n)
+        - vel -- (2, 1, n)
+        - bg -- background of the image (the map)
+        - log_im -- the list where in_game's data will stay until treatment
+        - log_act -- the list where in_game's actions will stay until treatment
+        - features -- the list where finished game's data are stoked
+        - labels -- the list where the label conresponding to an end are stocked
+        - life_time -- maximal number of decisions in a game
+        - life -- current number of decisions
 
+
+        Return:
+        """
         w, h, d = self.dims
         self.igc = n
         self.obs, self.goal, self.pos, self.vel = get_map(n, p, q, w, h)
@@ -151,6 +168,7 @@ class Simulation:
             if log_act is not None:
                 new_act = np.concatenate((log_act, new_act), axis=0)
             log_act = new_act
+
 
             new_pos = self.pos + self.vel + action
             win, loose = self.get_result(new_pos)
