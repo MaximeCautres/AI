@@ -27,7 +27,7 @@ def initialize_parameters(parameters, dnn_topology):
         if parameters['lt' + str(l)] == 'c':
             w, h, k_d = current
             k_w, k_h, k_c = parameters['kd' + str(l)]
-            parameters['K' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1)
+            parameters['K' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1) * (10 ** -2)
             current = [w + k_w - 1, h + k_h - 1, k_c]
         else:
             s_x, s_y = parameters['ss' + str(l)]
@@ -45,7 +45,7 @@ def initialize_parameters(parameters, dnn_topology):
     for l in range(1, parameters['Ld']):
         cond = l < parameters['Ld'] - 1
         parameters['afd' + str(l)] = 'relu' * cond + 'softmax' * (not cond)
-        parameters['w' + str(l)] = np.random.randn(*dnn_topology[l - 1:l + 1][::-1]) * 10 ** -1
+        parameters['w' + str(l)] = np.random.randn(*dnn_topology[l - 1:l + 1][::-1]) * (10 ** -2)
         parameters['b' + str(l)] = np.zeros((dnn_topology[l], 1))
 
     return parameters
