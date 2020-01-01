@@ -1,0 +1,12 @@
+import pygame
+import numpy as np
+import pygame.freetype as freetype
+
+pygame.init()
+font = freetype.SysFont(None, 25)
+array = np.random.random((600, 600)) * 255
+surface = pygame.surfarray.make_surface(array)
+font.render_to(surface, (0, 0), 'Hey !')
+screen = pygame.display.set_mode((600, 600))
+screen.blit(surface, (0, 0))
+pygame.display.flip()

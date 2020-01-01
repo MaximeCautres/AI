@@ -1,7 +1,7 @@
 import time
 import pygame
-from convolutional_neural_network import *
 import matplotlib.pyplot as plt
+from convolutional_neural_network import *
 
 
 def show_stats(stats, t):
@@ -17,7 +17,7 @@ def collide(areas, p):
     return np.sum((areas[0] <= p[0]) * (p[0] <= areas[2]) * (areas[1] <= p[1]) * (p[1] <= areas[3]), axis=0)
 
 
-def get_map(n, p, q, w, h):
+def get_map(n, w, h, p=2, q=1):
     """
     [x-, y-, x+, y+]
     obs -- (4, p, n)
@@ -26,10 +26,10 @@ def get_map(n, p, q, w, h):
     vel -- (2, 1, n)
     """
 
-    obs_brut = np.array([[5, 5, 7, 19], [17, 5, 19, 19]], dtype=int)
+    obs_brut = np.array([[4, 5, 6, 19], [18, 5, 20, 19]], dtype=int)
     obs = np.broadcast_to(obs_brut.T.reshape(4, p, 1), (4, p, n))
 
-    goal_brut = np.array([[[11, 11, 13, 13]]], dtype=int)
+    goal_brut = np.array([[[10, 10, 14, 14]]], dtype=int)
     goal = np.broadcast_to(goal_brut.T.reshape(4, q, 1), (4, q, n))
 
     pos = get_spawn(np.concatenate((obs, goal), axis=1), n, w, h)
@@ -81,11 +81,11 @@ class Simulation:
 
             for j in range(p):
                 x1, y1, x2, y2 = self.obs[:, j, k]
-                img[x1:x2, y1:y2, :, k] = self.color_map['obst']
+                img[x1:x2+1, y1:y2+1, :, k] = self.color_map['obst']
 
             for j in range(q):
                 x1, y1, x2, y2 = self.goal[:, j, k]
-                img[x1:x2, y1:y2, :, k] = self.color_map['goal']
+                img[x1:x2+1, y1:y2+1, :, k] = self.color_map['goal']
 
         return img
 
@@ -98,16 +98,20 @@ class Simulation:
 
     def get_result(self, p):
 
-        w, h, _ = self.dims
-        borders = np.array([0, 0, w-1, h-1])
-
         win_table = collide(self.goal, p)
-        loose_table = collide(self.obs, p) + (True - collide(borders, p))
+        loose_table = collide(self.obs, p) + (True - self.in_screen(p))
 
         win = [k for k in range(self.igc) if win_table[k]]
         loose = [k for k in range(self.igc) if loose_table[k]]
 
         return win, loose
+
+    def in_screen(self, p):
+
+        w, h, _ = self.dims
+        borders = np.array([0, 0, w - 1, h - 1])
+
+        return collide(borders, p)
 
     def transform(self, array_in, result='None'):
 
@@ -125,11 +129,11 @@ class Simulation:
 
         return list(array_out)
 
-    def make_a_batch(self, parameters, n, p=2, q=1):
+    def make_a_batch(self, parameters, n):
 
         w, h, d = self.dims
         self.igc = n
-        self.obs, self.goal, self.pos, self.vel = get_map(n, p, q, w, h)
+        self.obs, self.goal, self.pos, self.vel = get_map(n, w, h)
         self.bg = self.get_bg()
         win_count = 0
         life = 0
@@ -142,9 +146,11 @@ class Simulation:
 
         while life < self.life_time and 0 < self.igc:
 
+            life += 1
             img = log_img[-1]
             prob = forward(parameters, img)
-            a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+            # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+            a = np.argmax(prob, axis=0)
             action = self.actions[a].T.reshape(2, 1, self.igc)
 
             new_act = np.array([a])
@@ -202,3 +208,77 @@ class Simulation:
         show_stats(stats, (np.arange(epoch_count // print_length) + 1) * print_length)
 
         return parameters
+
+    def numpy_to_pygame(self, source, size, distribution):
+        array = source.reshape(self.dims[:2]) * 255
+        new_pos = self.pos + self.vel
+        ac = self.actions.shape[0]
+
+        red = min(distribution)
+        green = max(distribution)
+        delta = green - red
+        map_color = lambda z: pygame.Color(int(255 * (green - z) / delta), int(255 * (z - red) / delta), 0)
+
+        surface = pygame.surfarray.make_surface(array)
+
+        for k in range(ac):
+            p = new_pos + self.actions[k].reshape(2, 1, 1)
+            if self.in_screen(p):
+                x, y = p.reshape(-1)
+                surface.set_at((x, y), map_color(distribution[k]))
+
+        return pygame.transform.scale(surface, size)
+
+    def play(self, parameters, count):
+
+        w, h, d = self.dims
+        u = self.unit
+        self.igc = 1
+
+        pygame.init()
+        img_size = (w * u, h * u)
+        screen = pygame.display.set_mode(img_size)
+
+        for _ in range(count):
+
+            self.obs, self.goal, self.pos, self.vel = get_map(1, w, h)
+            self.bg = self.get_bg()
+            life = 0
+
+            previous = self.get_img(self.bg.copy())
+            current = previous
+            game_state = 'in_game'
+
+            prob = forward(parameters, np.concatenate((previous, current), axis=2))
+            img = self.numpy_to_pygame(current, img_size, list(prob))
+
+            while life < self.life_time and game_state == 'in_game':
+
+                screen.blit(img, (0, 0))
+
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+
+                        life += 1
+                        # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+                        a = np.argmax(prob, axis=0)
+                        action = self.actions[a].T.reshape(2, 1, 1)
+
+                        new_pos = self.pos + self.vel + action
+                        win, loose = self.get_result(new_pos)
+
+                        if 0 < len(win):
+                            game_state = 'win'
+                        elif 0 < len(loose):
+                            game_state = 'loose'
+                        else:
+                            self.vel = new_pos - self.pos
+                            self.pos = new_pos
+                            previous = current
+                            current = self.get_img(self.bg.copy())
+                            prob = forward(parameters, np.concatenate((previous, current), axis=2))
+                            img = self.numpy_to_pygame(current, img_size, list(prob))
+
+                pygame.display.flip()
+            print(game_state)
+        pygame.quit()

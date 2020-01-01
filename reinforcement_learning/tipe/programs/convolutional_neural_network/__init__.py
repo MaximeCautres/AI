@@ -35,7 +35,7 @@ def initialize_parameters(parameters, dnn_topology):
             w, h = current[:2]
             pr_x = [x for x in range(w) if not (x % s_x) and x + p_w <= w or x + p_w == w]
             pr_y = [y for y in range(h) if not (y % s_y) and y + p_h <= h or y + p_h == h]
-            parameters['afc' + str(l)] = 'relu'
+            parameters['afc' + str(l)] = 'elu'
             parameters['pf' + str(l)] = 'mean'
             parameters['pr' + str(l)] = (pr_x, pr_y)
             current[:2] = [len(pr_x), len(pr_y)]
@@ -219,7 +219,9 @@ def pool(A, pr, pd, pf, af):
                 Y[i, j] = pool_mean(A_)
 
     Z = None
-    if af == 'relu':
+    if af == 'elu':
+        Z = elu(Y)
+    elif af == 'relu':
         Z = relu(Y)
 
     return Y, Z
@@ -286,7 +288,9 @@ def depool(dZ, Y_p, pr, pd, pf, af):
     dA = np.zeros((pr_x[-1] + pd_x, pr_y[-1] + pd_y, d, n))
 
     dY = None
-    if af == 'relu':
+    if af == 'elu':
+        dY = elu_prime(Y_p) * dZ
+    elif af == 'relu':
         dY = relu_prime(Y_p) * dZ
 
     for x in range(w_Z):
@@ -364,6 +368,14 @@ def relu(z):
 
 def relu_prime(z):
     return z > 0
+
+
+def elu(z, eta=1):
+    return np.minimum(np.abs(z), eta * (np.exp(z) - 1))
+
+
+def elu_prime(z, eta=1):
+    return np.minimum(1, eta * np.exp(z))
 
 
 def softmax(z):

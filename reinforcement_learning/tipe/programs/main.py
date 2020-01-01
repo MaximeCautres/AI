@@ -13,8 +13,7 @@ simulation = Simulation(dimension, color_map, actions, 12, 36)
 
 if import_file:
     parameters = pickle.load(open(file_name, 'rb'))
-    print(parameters)
-    # simulation.play(parameters, 12)
+    simulation.play(parameters, 32)
 
 else:
     parameters = {'Lc': 3, 'idi': dimension[:2] + (2,),
@@ -23,7 +22,5 @@ else:
     dnn_topology = (13 * 13 * 4, 64, len(actions))
     parameters = initialize_parameters(parameters, dnn_topology)
 
-    # simulation.play(parameters, 24)
-
-    parameters = simulation.train(parameters, 10**-1, 6, 2**11, 2**4)
+    parameters = simulation.train(parameters, 10**-1, 256, 2**9, 2**2)
     pickle.dump(parameters, open(file_name, 'wb'))
