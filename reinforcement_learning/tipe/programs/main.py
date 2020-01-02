@@ -2,7 +2,7 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_0'
+file_name = 'parameters_4'
 import_file = False
 begin_with = ''
 
@@ -27,5 +27,5 @@ else:
     else:
         parameters = initialize_parameters(parameters, dnn_topology)
 
-    parameters = simulation.train(parameters, 10**-1, 256, 2**9, 2**2)
+    parameters = simulation.train(parameters, 10**-1, 256, 42000, 2**7)
     pickle.dump(parameters, open(file_name, 'wb'))
