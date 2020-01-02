@@ -17,7 +17,10 @@
 \newcommand{\ud}{\mathrm{d}}
 \newcommand{\hsp}{\hspace{20pt}}
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
-\setlength{\parindent}{0pt}
+\renewcommand{\labelitemi}{\cdot}
+\renewcommand{\labelitemii}{\cdot}
+\renewcommand{\labelitemiii}{\diamond}
+\renewcommand{\labelitemiv}{\ast}
 
 \begin{document}
 
@@ -38,11 +41,13 @@ Français:
 
 \begin{itemize}
 
-\item Intelligence Artificielle
-\item Apprentissage par Renforcement
 \item Manœuvre de bateau en autonomie
-\item Simulation Physique
+\item Apprentissage par Renforcement
+\item 
 \item Port marin
+\item Simulation physique
+
+
 
 \end{itemize}
 
@@ -50,11 +55,11 @@ Anglais:
 
 \begin{itemize}
 
-\item Artificial Intelligence
-\item Reinforcement Learning
 \item Autonomous boat operation
-\item Physical Simulation
 \item Seaport
+\item Reinforcement Learning
+\item Physical Simulation
+
 
 \end{itemize}
 
@@ -62,10 +67,94 @@ Anglais:
 
 \section*{Bibliographie commentée}
 
-\indent ouiyzbfvkujvkzuevfkuavk \\
+\begin{itemize}
+\item Context
+\item Besoin
+\item State of the art
+\item liste de nouvelles technologies candidates ayant du potentielles
+\end{itemize}
 
 
+\indent Le commerce maritime est aujourd'hui l'un des plus importants secteurs dans le transport
+de marchandises. Il soulève de nombreux problème tant internationalement avec les différentes 
+routes commerciales. Mais aussi nationalement avec la nécessité d'augmenter la taille et le 
+trafics des grands ports. Cependant, ces grands ports face à l'augmentation de la taille et du 
+nombre de bateaux doivent aider les capitaines à la manœuvrer dans le port pour limiter les risques.
+La solutions couramment utilisé consiste à la formation de pilotes spécifiques à un port pour 
+ensuite les envoyer sur les bateaux pour remplacer le capitaine dès l'entrée du port. 
+Ce procédé est coûteux et demande un effort logistique important, c'est pourquoi depuis quelque années des 
+entreprises tels que Volvo et Yanmar Global se propose à trouver une solution quant à l'automatisation de 
+ces manœuvres. Pour cela, elles font appelle à des technologie de calculs de trajectoire 
+et d'asservissements. Elle nécessite de nombreuses balises de positionnement sur le port puis l'installation de nombreux capteurs sur chaque bateaux pour leur
+permettre de mieux réagir face à l'environnement proche. Les manœuvre s'effectue à 
+très faible allure pour permettre le maximum de réactivité du bateau, facilitant ainsi le 
+travail d'asservissement.
+\indent Une nouvelle technologie non encore implémentée pour ce problème nous intéresse grandement.
+Il s'agit de l'intelligence artifielle. Il existe des algorithmes d'apprentissage dit
+supervisé, pour lesquels la machine apprend depuis une base de donnée de comportement que
+l'on souhaite qu'elle reproduise. Dans le cas d'une prise de décision depuis une image,
+le réseau neuronal convolutif est devenu incontournable. La branche de la discipline qui
+nous intéresse particulièrement est l'apprentissage par renforcement. Au lieu de décrire 
+précisément le comportement que doit adopté la machine, on lui donne un fonction 
+d'évaluation de son comportement. On ne sait pas comment agir pour atteindre ces comportements mais on sait si
+ils correspondent à ce que l'on attend ou non. Soit l'algorithme apprend à évaluer ces
+actions pour un état donné (basé sur de la valuation), soit il apprend une polique de
+fonctionnement c'est à dire une fonction qui à une situation associe une action (basé sur
+des poliques). 
+ 
+  Vieille de plus de 5000 ans, l’astronomie est un domaine scientifique vaste et fécond.
+Aujourd’hui l’astronomie se sépare en deux catégories, bien qu’elles ne soient pas
+totalement hermétiques l’une à l’autre : l’astrophysique et l’astronomie d’observation [1].
+C’est cette dernière branche qui fera l’objet de mon étude. Le problème le plus développé
+sera celui de la turbulence atmosphérique, qui reste un des plus difficiles à traiter.
+En effet, l’atmosphère n’est pas neutre pour les ondes électromagnétiques qui la
+traversent, et crée des phénomènes de réfraction et de déformation du front d’onde dues
+aux inhomogénéités qu’elle comporte [2].
+La turbulence atmosphérique est particulièrement problématique pour l’observation,
+provoquant des écarts allant de 2 à 20 secondes d’arc ; c’est le seeing auquel on associe des
+tailles caractéristiques qui dépendent de la longueur d’onde. Dans le visible, un seeing
+correct est de l’ordre d’une seconde d’arc.
+Cette turbulence, générée par des inhomogénéités dues à la composition de l’air, à
+certains courants, est chaotique et est prépondérante sur les 20 premiers kilomètres
+d’altitude et ses effets peuvent être perçus à l’œil nu, comme la scintillation par exemple
+[3,4,7].
+Dans le but d’augmenter la résolution des instruments d’observation situés sur terre
+et d’accéder à des détails jusqu’ici inconnus, l’optique adaptative représente une grande
+avancée pour l’observation des astres.
+Initiée par la défense américaine durant la Guerre Froide et le projet de « guerre des
+étoiles », la dé-classification de ces travaux permit à la science d’avancer.
+L’objectif de cette méthode est de corriger en temps réel la déformation du front
+d’onde reçu par le système d’observation après passage dans l’atmosphère [4]. La mise en
+œuvre de cette méthode est technologiquement très exigeante : elle nécessite l’emploi
+d’instruments d’une précision inouïe, notamment l’usage de miroirs déformables, mais aussi
+d’une capacité de calcul importante.
+Elle trouve une application essentielle en ophtalmologie, où elle permet de corriger
+les défauts introduits par les différents milieux de l’œil à des fins chirurgicales [5].
 
+Le principe de l’optique adaptative répond au schéma suivant : le signal est acquis
+puis analysé par un analyseur de front d’onde. Un paramètre important lors de l’acquisition
+est r0 qui est une taille caractéristique correspondant à la taille d’une division de front
+d’onde [6].
+Parmi ces analyseurs de front d’onde, la technique de l’interférométrie est
+largement utilisée et permet de remonter directement à la déformation locale du front
+d’onde. En 1972, elle permettait d’analyser jusqu’à 10 000 fronts d’onde par seconde.
+Un autre type d’analyseur de front d’onde est le Shack-Hartmann, il fera partie de
+l’objet de mon étude.
+Ensuite, informatiquement, on calcule la déformation qu’il faut appliquer au miroir
+pour corriger le front d’onde à l’aide de différentes méthodes (en pratique : polynômes de
+Zernike par exemple, mais ceux-ci ne seront pas l’objet de l’étude) [6,7]. Le système
+informatique envoie les instructions au système de déformation du miroir, qui peut alors
+agir par le biais de vérins.
+Il existe deux types de miroirs, les miroirs dits segmentés, et les miroirs continus
+utilisés dorénavant. Les premiers ont l’avantage d’être plus facilement déformables mais
+créent des phénomènes de diffraction que les miroirs continus ne provoquent pas.
+Cependant l’obtention d’un signal de référence n’est pas aussi simple qu’il n’y paraît.
+Utiliser une source naturelle quasi ponctuelle (étoile) assez lumineuse et proche de l’astre
+observé pour tester l’atmosphère localement n’est pas toujours possible. C’est pourquoi les
+physiciens ont recours à l’usage de lasers permettant d’exciter les atomes de sodium de la
+haute atmosphère qui émettent alors en retour, créant ainsi des pseudo-étoiles dites guides
+[8].
+ 
 \section*{Problématique}
 
 \indent yuafkyjhvafgryzufjakyzfy
@@ -74,13 +163,21 @@ Anglais:
 
 \begin{itemize}
 
-\item li	ybedjkh	zebfl
-\item liubfjlbfalhj
+\item Comprendre la logique de l'apprentissage par renforcement
+\item Programmer notre propre algorithme d'apprentissage par reforcement sans utiliser de librairies d'intelligence artificielle
+\item Créer une simulation discrète d'un déplacement de bateau
+\item Reussir à faire stationner un bateau dans un port
 
 \end{itemize}
 
+\section*{Bibliographie}
+\begin{itemize}
 
-\section*{DOT}
+\item Steve with the backpro
+\item Yann Le Cun with the CNN
+\item Value Based with David Silvers
+\item Andrej Kaparthy
 
-iyzrbflimbfmrubd
+\end{itemize}
+
 \end{document}
