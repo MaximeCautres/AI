@@ -204,8 +204,9 @@ class Simulation:
         for epoch in range(1, epoch_count + 1):
 
             features, labels, win_rate = self.make_a_batch(parameters, batch_size)
-            gradients = backward(parameters, features, labels)
-            parameters = update_parameters(parameters, gradients, alpha)
+            if 0 < features.size + labels.size:
+                gradients = backward(parameters, features, labels)
+                parameters = update_parameters(parameters, gradients, alpha)
             win_rates.append(win_rate)
 
             if not epoch % print_length:
