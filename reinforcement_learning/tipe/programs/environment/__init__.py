@@ -129,7 +129,7 @@ class Simulation:
 
         return list(array_out)
 
-    def make_a_batch(self, parameters, n):
+    def make_a_batch(self, parameters, n, epsilon=0.):
         """
         This function creates the experience batches used in the policy gradient algorithm.
         - w, h, d -- dimension of the map's image
@@ -141,7 +141,7 @@ class Simulation:
         - log_im -- the list where in_game's data will stay until treatment
         - log_act -- the list where in_game's actions will stay until treatment
         - features -- the list where finished game's data are stoked
-        - labels -- the list where the label conresponding to an end are stocked
+        - labels -- the list where the label corresponding to an end are stocked
         - life_time -- maximal number of decisions in a game
         - life -- current number of decisions
         """
@@ -164,9 +164,12 @@ class Simulation:
             life += 1
             img = log_img[-1]
             prob = forward(parameters, img)
+
             # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
             a = np.argmax(prob, axis=0)
             action = self.actions[a].T.reshape(2, 1, self.igc)
+            index = np.random.random(self.igc) < epsilon
+            action[..., index] = np.random.randint(len(self.actions), size=np.count_nonzero(index))
 
             new_act = np.array([a])
             if log_act is not None:
@@ -200,14 +203,17 @@ class Simulation:
         time_point = time.time()
         stats = {'mean': [], 'min': [], 'max': []}
         win_rates = []
+        eps = 0.2
 
         for epoch in range(1, epoch_count + 1):
 
-            features, labels, win_rate = self.make_a_batch(parameters, batch_size)
+            features, labels, win_rate = self.make_a_batch(parameters, batch_size, eps)
             if 0 < features.size + labels.size:
                 gradients = backward(parameters, features, labels)
                 parameters = update_parameters(parameters, gradients, alpha)
             win_rates.append(win_rate)
+
+            eps *= 0.999
 
             if not epoch % print_length:
 

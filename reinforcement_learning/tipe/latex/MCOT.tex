@@ -17,7 +17,10 @@
 \newcommand{\ud}{\mathrm{d}}
 \newcommand{\hsp}{\hspace{20pt}}
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
-\setlength{\parindent}{0pt}
+\renewcommand{\labelitemi}{\cdot}
+\renewcommand{\labelitemii}{\cdot}
+\renewcommand{\labelitemiii}{\diamond}
+\renewcommand{\labelitemiv}{\ast}
 
 \begin{document}
 
@@ -38,11 +41,13 @@ Français:
 
 \begin{itemize}
 
-\item Intelligence Artificielle
-\item Apprentissage par Renforcement
 \item Manœuvre de bateau en autonomie
-\item Simulation Physique
+\item Apprentissage par Renforcement
+\item 
 \item Port marin
+\item Simulation physique
+
+
 
 \end{itemize}
 
@@ -50,11 +55,11 @@ Anglais:
 
 \begin{itemize}
 
-\item Artificial Intelligence
-\item Reinforcement Learning
 \item Autonomous boat operation
-\item Physical Simulation
 \item Seaport
+\item Reinforcement Learning
+\item Physical Simulation
+
 
 \end{itemize}
 
@@ -62,10 +67,20 @@ Anglais:
 
 \section*{Bibliographie commentée}
 
-\indent ouiyzbfvkujvkzuevfkuavk \\
+\begin{itemize}
+\item Context
+\item Besoin
+\item State of the art
+\item liste de nouvelles technologies candidates ayant du potentielles
+\end{itemize}
 
 
+\indent Le commerce maritime est aujourd'hui l'un des plus importants secteurs dans le transport de marchandises. Il soulève de nombreux problème tant internationalement avec les différentes routes commerciales. Mais aussi nationalement avec la nécessité d'augmenter la taille et le trafics des grands ports. Cependant, ces grands ports face à l'augmentation de la taille et du nombre de bateaux doivent aider les capitaines à la manœuvrer dans le port pour limiter les risques. La solutions couramment utilisé consiste à la formation de pilotes spécifiques à un port pour ensuite les envoyer sur les bateaux pour remplacer le capitaine dès l'entrée du port. Ce procédé est coûteux et demande un effort logistique important, c'est pourquoi depuis quelque années des entreprises tels que Volvo et ... se propose à trouver une solution quant à l'automatisation de ces manœuvres. Pour cela, elles font appelle à des technologie de calculs de trajectoire et d'asservissements. Ces solutions technique nécessite de nombreuses balises sur le port et capteurs sur les bateaux.
+\\
+\indent Une nouvelle technologie non encore implémentée pour ce problème nous intéresse grandement. Il s'agit de l'intelligence artificielle. Il existe des algorithmes d'apprentissage dit supervisé, pour lesquels la machine apprend depuis une base de donnée de comportement que l'on souhaite qu'elle reproduise. Dans le cas d'une prise de décision depuis une image, le réseau neuronal convolutif est devenu incontournable. La branche de la discipline qui va nous intéressé est l'apprentissage par renforcement. A la place de décrire précisément le comportement que doit adopté la machine, on lui donne un fonction d'évaluation de son comportement. On ne sait pas comment agir pour atteindre ces comportements mais on sait si ils correspondent à ce que l'on attend ou non. Soit l'algorithme apprend à évaluer ces actions pour un état donné (basé sur des évaluations), soit il apprend une politique de fonctionnement c'est à dire une fonction qui à une situation associe une action (basé sur des politiques). Nous présenterons ces deux méthodes ainsi qu'une version hybride qui montrera leurs complémentarités.
 
+ 
+ 
 \section*{Problématique}
 
 \indent yuafkyjhvafgryzufjakyzfy
@@ -74,13 +89,21 @@ Anglais:
 
 \begin{itemize}
 
-\item li	ybedjkh	zebfl
-\item liubfjlbfalhj
+\item Comprendre la logique de l'apprentissage par renforcement
+\item Programmer notre propre algorithme d'apprentissage par renforcement sans utiliser de librairies d'intelligence artificielle
+\item Créer une simulation discrète d'un déplacement de bateau
+\item Réussir à faire stationner un bateau dans un port
 
 \end{itemize}
 
+\section*{Bibliographie}
+\begin{itemize}
 
-\section*{DOT}
+\item Steve with the backpro
+\item Yann Le Cun with the CNN
+\item Value Based with David Silvers
+\item Andrej Kaparthy
 
-iyzrbflimbfmrubd
+\end{itemize}
+
 \end{document}
