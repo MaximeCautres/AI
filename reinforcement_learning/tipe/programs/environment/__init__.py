@@ -233,6 +233,8 @@ class Simulation:
 
     def numpy_to_pygame(self, source, size, distribution):
         array = source.reshape(self.dims[:2]) * 255
+        surface = pygame.surfarray.make_surface(array)
+
         new_pos = self.pos + self.vel
         ac = self.actions.shape[0]
 
@@ -240,8 +242,6 @@ class Simulation:
         green = max(distribution)
         delta = green - red
         map_color = lambda z: pygame.Color(int(255 * (green - z) / delta), int(255 * (z - red) / delta), 0)
-
-        surface = pygame.surfarray.make_surface(array)
 
         for k in range(ac):
             p = new_pos + self.actions[k].reshape(2, 1, 1)
