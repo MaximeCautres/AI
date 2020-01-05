@@ -1,7 +1,8 @@
-
 \documentclass[12pt,a4paper]{extarticle}
-\usepackage[a4paper,margin=20mm]{geometry}
-\usepackage[french]{babel}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage[french]{babel}\usepackage[french]{babel}
+\frenchbsetup{StandardLists=true} % à inclure si on utilise \usepackage[french]{babel}
+\usepackage{enumitem}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -12,78 +13,145 @@
 \usepackage{multicol}
 \usepackage{graphicx}
 \usepackage{wrapfig}
-\usepackage[backend=biber]{biblatex}
-\addbibresource{data_base.bib}
-\usepackage[nottoc, notlof, notlot]{tocbibind}
 \usepackage{textcomp}
-\usepackage{xcolor}
+\usepackage[svgnames]{xcolor}
+\usepackage{color}
 \usepackage{listings}
 \newcommand{\ud}{\mathrm{d}}
 \newcommand{\hsp}{\hspace{20pt}}
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
-\setlength{\parindent}{0pt}
+\renewcommand{\labelitemi}{\cdot}
+\renewcommand{\labelitemii}{\cdot}
+\renewcommand{\labelitemiii}{\diamond}
+\renewcommand{\labelitemiv}{\ast}
+
 
 \begin{document}
 
 \begin{center}
 
-\huge{ \bfseries Utilisation de l'intelligence artificielle dans la manœuvre autonome de bateau}
+\huge{{\color{SteelBlue}  \bfseries Utilisation de l'intelligence artificielle dans la manœuvre autonome de bateau}}
 \end{center}
 
-\section*{Positionnement thématique}
+\section*{{\color{SteelBlue} \bfseries Positionnement thématique}}
 
 Intelligence Artificielle, Apprentissage automatique, Méthodes stochastiques
 
-\section*{Mots-clefs}
+\section*{{\color{SteelBlue} Mots-clefs}}
 
 \begin{multicols}{2}
 
 Français:
 
-\begin{itemize}
+\begin{itemize}[label=\textbullet]
 
-\item Intelligence Artificielle
-\item Apprentissage par Renforcement
 \item Manœuvre de bateau en autonomie
-\item Simulation Physique
 \item Port marin
+\item Apprentissage par Renforcement
+\item Simulation physique
+
+
 
 \end{itemize}
 
 Anglais:
 
-\begin{itemize}
+\begin{itemize}[label=\textbullet]
 
-\item Artificial Intelligence
-\item Reinforcement Learning
 \item Autonomous boat operation
-\item Physical Simulation
 \item Seaport
+\item Reinforcement Learning
+\item Physical Simulation
+
 
 \end{itemize}
 
 \end{multicols}
 
-\section*{Bibliographie commentée}
+\section*{\color{SteelBlue} {Bibliographie commentée}}
 
-\indent ouiyzbfvkujvkzuevfkuavk \textcite{3b1b}
+\indent Le commerce maritime est aujourd'hui l'un des plus importants secteurs dans le 
+transport de marchandises. Il soulève de nombreux problèmes tant internationalement avec 
+les différentes routes commerciales que nationalement avec la nécessité 
+d'augmenter le trafic des grands ports. De plus, ces grands ports 
+avec l'augmentation de la taille et du nombre de bateaux doivent aider les capitaines 
+à manœuvrer dans le port pour limiter les risques de collisions et fluidifier le trafic.
+La solution couramment utilisée consiste à la formation de pilotes spécialistes du port envoyés sur 
+les bateaux pour remplacer les capitaines dès l'approche de la zone {\bfseries [1]}. Ce procédé est coûteux 
+et demande un effort logistique important, c'est pourquoi depuis quelques années des 
+entreprises telles que Volvo {\bfseries [2]} et Yanmar {\bfseries [3]} se proposent de trouver une solution quant à 
+l'automatisation de ces manœuvres. Pour cela, elles font appel à des technologies de 
+calculs de trajectoires et d'asservissement. Elles nécessitent l'installation de nombreuses balises de 
+positionnement sur le port puis de nombreux capteurs sur chaque bateaux 
+pour permettre aux bateaux de mieux réagir face à l'environnement. Les manœuvres 
+s'effectuent à très faibles allures pour permettre le maximum de réactivité, 
+facilitant ainsi le travail d'asservissement. \\
+\indent Une nouvelle technologie non encore implémentée semble très prometteuse. 
+Il s'agit de l'intelligence artificielle. La discipline naît dans les années
+cinquante et le concept d'algorithme qui apprend est dès lors exposé par Alan Turing {\bfseries [4]}.
+Le concept a mûri avec les progrès de l'informatique. Le premier grand succès est la 
+victoire de DeepBlue contre Kasparov en 1998 {\bfseries [5]}, considéré comme le meilleur joueur d'échec 
+de tout les temps. Cependant, l'algorithme n'avait rien d'intelligent. Aujourd'hui, 
+grâce aux travaux de Yann LeCun, Geoffrey Hinton et d'autres {\bfseries [6]}, les méthodes ont été 
+totalement bouleversées avec l'introduction de la notion d'apprentissage {\bfseries [7]}.
+Les nouveaux algorithmes d'apprentissage sont de deux types. Les premiers sont qualifiés de supervisés {\bfseries [8]},
+la machine apprend depuis une base de données des comportements que
+l'on souhaite qu'elle reproduise. Ils reposent sur l'utilisation d'un réseaux 
+de neurones. Dans le cas où l'on utilise des images, les réseaux de neurones convolutifs {\bfseries [9]}
+sont devenus incontournables. Cette méthode est très efficace mais nécessite des bases 
+de données labellisées très importantes, ce qui pour certaines tâches n'est pas accessible. 
+Pour ces situations, une nouvelle approche dénommée apprentissage non supervisé {\bfseries [8]}, a permis
+de faire de grand progrès. Une de ses branches semble particulièrement adaptée à 
+l'automatisation des manœuvres de bateau, l'apprentissage par renforcement {\bfseries [10]}. Au lieu de 
+décrire précisément le comportement que doit adopter la machine, on lui donne une fonction 
+d'évaluation de celui-ci. On ne sait pas comment agir pour l'atteindre mais on sait s'il correspond à ce que l'on attend ou pas. Soit 
+l'algorithme apprend à évaluer ces actions pour un état donné (fondé sur de la valuation) {\bfseries [11]},
+soit il apprend une politique de fonctionnement c'est-à-dire une fonction qui à une 
+situation associe une action (fondé sur des politiques) {\bfseries [12]}. Toutes ces techniques utilisent des 
+algorithmes d'apprentissages, le plus connu étant la rétro-propagation {\bfseries [13]}. Cela permet de 
+partir d'un réseau de neurones aléatoirement définis pour, au fur et à mesure des étapes 
+d'entraînement, converger vers le cerveau qui répond le plus justement possible à la demande. Ces 
+technologies d'apprentissage commencent à être utilisées pour la conduite autonome sur route {\bfseries [14]}
+mais ne sont pas encore certifiées, par manque de compréhension de la technologie.
 
+ 
+\section*{{\color{SteelBlue} Problématique}}
 
+\indent Comment peut-on utiliser l'intelligence artificielle pour permettre à un bateau de manœuvrer dans un port dans le but de minimiser les dépenses liées à l'augmentation du trafic tout en garantissant la sécurité.  
 
-\section*{Problématique}
+\section*{{\color{SteelBlue} Objectifs du TIPE}}
 
-\indent yuafkyjhvafgryzufjakyzfy
+\begin{itemize}[label=\textbullet]
 
-\section*{Objectifs du TIPE}
+\item Réussir à faire stationner un bateau dans un port
+\item Programmer notre propre algorithme d'apprentissage par renforcement sans utiliser de librairie dédiée.
+\item Créer une simulation discrète et réaliste d'un déplacement de bateau prenant en compte l'inertie et la viscosité.
+\item Comprendre et réussir à manipuler les concepts sur lesquels sont basés l'intelligence artificielle.
+\item Implémenter différentes technologies pour pouvoir comparer les performances et trouver la meilleure solution technique à notre problème.
 
-\begin{itemize}
-
-\item li	ybedjkh	zebfl
-\item liubfjlbfalhj
 
 \end{itemize}
 
-\section*{Bibliographie}
-\printbibliography
+\section*{{\color{SteelBlue} Bibliographie}}
+
+\begin{enumerate}[label = {\bfseries [\arabic*] } ]
+
+\item FFPM. Rôle des pilotes. Disponible sur http://public.pilotes-maritimes.com/le-pilotage-en-france/role-des-pilotes/ (Consulté en 09/2019).
+\item Volvo Penta. Volvo Penta unveils pioneering selfdocking yacht technology. Disponible sur https://www.volvopenta.com/marineleisure/en-en/news/2018/jun/volvo-penta-unveils-pioneering-self-docking-yacht-technology.html (Consulté en 09/2019).
+\item Yanmar. Yanmar Develops Basic Technology with JAMSTEC for Auto-navigation Robotic Boat and Auto-docking System. Disponible sur https://www.yanmar.com/us/news/2019/02/07/50938.html (Consulté en 09/2019).
+\item TURING, Alan. Computing Machinery and Intelligence [en ligne]. 1950. Format PDF. Disponible sur: https://www.csee.umbc.edu/courses/471/papers/turing.pdf (Consulté en 10/2018).
+\item PITTET, Lionel. Garry Kasparov: «Ma défaite contre Deep Blue était une victoire pour l’humanité», LE TEMPS [En ligne]. 2019. Disponible sur https://www.letemps.ch/sport/garry-kasparov-defaite-contre-deep-blue-etait-une-victoire-lhumanite (Consulté en 06/2019).
+\item VINCENT, James. ‘Godfathers of AI’ honored with Turing Award, the Nobel Prize of computing, THE VERGE [En ligne]. 2019. Disponible sur https://www.theverge.com/2019/3/27/18280665/ai-godfathers-turing-award-2018-yoshua-bengio-geoffrey-hinton-yann-lecun (Consulté en 04/2019).
+\item FRIDMAN, Lex. MIT Deep Learning [En ligne]. Disponible sur https://deeplearning.mit.edu/ (Consulté en 2019).
+\item NIELSEN, Michael. Using neural nets to recognize handwritten digits [En ligne]. Disponible sur http://neuralnetworksanddeeplearning.com/chap1.html (Consulté en 2019)
+\item LECUN, Yann and BENGIO, Yoshua. Convolutional Networks for images, speech, and Time-Series [En ligne]. Format PDF. Disponible sur http://yann.lecun.com/exdb/publis/pdf/lecun-bengio-95a.pdf (Consulté en 10/2019).
+\item Reinforcement Learning, WIKIPEDIA [En ligne]. Disponible sur https://en.wikipedia.org/wiki/Reinforcement\textunderscore learning (Consulté en 09/2019).
+\item David Silvers
+\item KARPATHY Andrej, Deep Reinforcement Learning: Pong from Pixels [En ligne]. 2016. Disponible sur http://karpathy.github.io/2016/05/31/rl/ (Consulté en 2019).
+\item NIELSEN, Michael. How the backpropagation algorithm works [En ligne]. Disponible sur http://neuralnetworksanddeeplearning.com/chap2.html (Consulté en 2019).
+\item HOTZ, George Francis. comma.ai [En ligne].
+Disponible sur https://comma.ai/vehicles (Consulté en 10/2019).
+\end{enumerate}
 
 \end{document}
+
