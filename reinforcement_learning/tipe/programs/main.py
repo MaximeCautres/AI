@@ -3,7 +3,7 @@ from environment import *
 
 
 file_name = 'parameters_4'
-import_file = True
+import_file = False
 begin_with = ''
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
@@ -29,5 +29,5 @@ else:
     else:
         parameters = initialize_parameters(parameters, dnn_topology)
 
-    parameters = simulation.train(parameters, 10**-1, 256, 4096, 128)
+    parameters = simulation.train(parameters, 10**-1, 4, 4, 1)
     pickle.dump(parameters, open(file_name, 'wb'))

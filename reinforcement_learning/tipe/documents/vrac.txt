@@ -7,3 +7,17 @@ cross entropy
 cross entropy algorithm
 model-free reinforcement learning
 Monte Carlo methods
+
+
+A faire
+
+pool_max
+policy gradient (fonction de gain)
+passer en sorti du type distribution
+améliorer la gestion de l'environement et du CNN pour rendre l'ensemble plus rapide (précalcul des range)
+meilleur critique sur les actions effectuées (pression temporelle)
+actor critics
+cartes quelconques de format fixe
+bateau plus grand qu'une case, système de hit box sur les déplacements
+adaptabilité des actions en fonction du déplacement et du type de bateau
+trouver des intermédiaires d'entrainement

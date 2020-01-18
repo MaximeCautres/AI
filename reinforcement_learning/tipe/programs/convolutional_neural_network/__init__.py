@@ -16,7 +16,7 @@ def initialize_parameters(parameters, dnn_topology):
     - ps: stride -> (s_x, s_y)
     - pd: pooling dimensions -> (p_w, p_h)
     - af: pooling activation function -> 'relu'
-    - pf: pooling function -> 'min' or 'max' or 'mean'
+    - pf: pooling function -> 'max' or 'mean'
 
     Return :
     parameters -- dictionary containing the whole network
@@ -36,7 +36,7 @@ def initialize_parameters(parameters, dnn_topology):
             pr_x = [x for x in range(w) if not (x % s_x) and x + p_w <= w or x + p_w == w]
             pr_y = [y for y in range(h) if not (y % s_y) and y + p_h <= h or y + p_h == h]
             parameters['afc' + str(l)] = 'elu'
-            parameters['pf' + str(l)] = 'mean'
+            parameters['pf' + str(l)] = 'max'
             parameters['pr' + str(l)] = (pr_x, pr_y)
             current[:2] = [len(pr_x), len(pr_y)]
 
@@ -76,8 +76,9 @@ def forward(parameters, X, return_cache=False):
         else:
             pr, pd = parameters['pr' + str(l)], parameters['pd' + str(l)]
             pf, af = parameters['pf' + str(l)], parameters['afc' + str(l)]
-            Y, A = pool(A, pr, pd, pf, af)
+            Y, A, I = pool(A, pr, pd, pf, af)
             cache['Y' + str(l)] = Y
+            cache['I' + str(l)] = I
 
     a = A.reshape(-1, n)
     cache['a0'] = a
@@ -138,9 +139,10 @@ def backward(parameters, X, y):
             gradients['dK' + str(l)] = dK
         else:
             Y_p = cache['Y' + str(l)]
+            I = cache['I' + str(l)]
             pr, pd = parameters['pr' + str(l)], parameters['pd' + str(l)]
             pf, af = parameters['pf' + str(l)], parameters['afc' + str(l)]
-            dA = depool(dA, Y_p, pr, pd, pf, af)
+            dA = depool(dA, Y_p, I, pr, pd, pf, af)
             gradients['dA' + str(l)] = dA
 
     return gradients
@@ -205,16 +207,18 @@ def pool(A, pr, pd, pf, af):
     p_w, p_h = pd
     w_Z, h_Z = len(pr_x), len(pr_y)
     Y = np.zeros((w_Z, h_Z, d, n))
-
+    Indices = None
+    
+    if pf == 'max':
+        Indices = np.zeros((w_Z, h_Z, d, n))
+    
     for i in range(w_Z):
         x = pr_x[i]
         for j in range(h_Z):
             y = pr_y[j]
             A_ = A[x:x + p_w, y:y + p_h]
-            if pf == 'min':
-                Y[i, j] = pool_min(A_)
-            elif pf == 'max':
-                Y[i, j] = pool_max(A_)
+            if pf == 'max':
+                Y[i, j], Indices[i, j] = pool_max(A_)
             elif pf == 'mean':
                 Y[i, j] = pool_mean(A_)
 
@@ -224,7 +228,7 @@ def pool(A, pr, pd, pf, af):
     elif af == 'relu':
         Z = relu(Y)
 
-    return Y, Z
+    return Y, Z, Indices
 
 
 def deconvolve(dZ, K, A_p):
@@ -265,13 +269,14 @@ def deconvolve(dZ, K, A_p):
     return dA, dK
 
 
-def depool(dZ, Y_p, pr, pd, pf, af):
+def depool(dZ, Y_p, I, pr, pd, pf, af):
     """
     Depool dZ
 
     Take :
     dZ -- current layer gradient image -> (w_Z, h_Z, d, n)
     Y_p -- previous linear image -> (w_Z, h_Z, d, n)
+    I -- indicies used in pool_max -> (w_Z, h_Z, d, n)
     pr -- pooling ranges -> (pr_x, pr_y)
     pd -- pooling dimensions -> (p_w, p_h)
     pf -- pooling function -> 'min' or 'max' or 'mean'
@@ -286,7 +291,9 @@ def depool(dZ, Y_p, pr, pd, pf, af):
     pd_x, pd_y = pd
     area = pd_x * pd_y
     dA = np.zeros((pr_x[-1] + pd_x, pr_y[-1] + pd_y, d, n))
-
+    d = np.array([np.array([i for _ in range(n)]) for i in range(d)])
+    n = np.array([np.array([j for j in range(n)]) for _ in range(d)])
+    
     dY = None
     if af == 'elu':
         dY = elu_prime(Y_p) * dZ
@@ -295,34 +302,14 @@ def depool(dZ, Y_p, pr, pd, pf, af):
 
     for x in range(w_Z):
         for y in range(h_Z):
-            dY_ = dY[x, y].reshape(1,1, d, n)
-            if pf == 'min':
-                pass
-            elif pf == 'max':
-                pass
+            if pf == 'max':
+                I_ = I[x, y].reshape(1, 1, d, n)
+                dA[pr_x[x] + I_ // pd_x, pr_y[y] + I_ % pd_x, d, n] += dY[x, y]
             elif pf == 'mean':
+                dY_ = dY[x, y].reshape(1, 1, d, n)
                 dA[pr_x[x]:pr_x[x] + pd_x, pr_y[y]:pr_y[y] + pd_y] += dY_ / area
 
     return dA
-
-
-def pool_min(X):
-    """
-    Apply a pool_min on X
-
-    Take :
-    X -- image -> (w_X, h_X, d, n)
-
-    Return :
-    Y -- pooled_min image -> (1, 1, d, n)
-    """
-
-    _, _, d, n = X.shape
-    X_bread = X.reshape(-1, d, n)
-    X_min = np.argmin(X_bread, axis=0).reshape((1, 1, d, n))
-    Y = np.min(X_bread, axis=0, keepdims=True)
-
-    return Y
 
 
 def pool_max(X):
@@ -338,10 +325,10 @@ def pool_max(X):
 
     _, _, d, n = X.shape
     X_bread = X.reshape(-1, d, n)
-    X_max = np.argmax(X_bread, axis=0).reshape((1, 1, d, n))
-    Y = np.max(X_bread, axis=0, keepdims=True)
+    X_max = np.argmax(X_bread, axis=0)
+    Y = np.max(X_bread, axis=0)
 
-    return Y
+    return Y, X_max
 
 
 def pool_mean(X):
@@ -357,7 +344,7 @@ def pool_mean(X):
 
     _, _, d, n = X.shape
     X_bread = X.reshape(-1, d, n)
-    Y = np.mean(X_bread, axis=0, keepdims=True)
+    Y = np.mean(X_bread, axis=0)
 
     return Y
 
