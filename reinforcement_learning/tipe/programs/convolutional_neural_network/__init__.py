@@ -210,7 +210,7 @@ def pool(A, pr, pd, pf, af):
     Indices = None
     
     if pf == 'max':
-        Indices = np.zeros((w_Z, h_Z, d, n))
+        Indices = np.zeros((w_Z, h_Z, d, n), dtype = int)
     
     for i in range(w_Z):
         x = pr_x[i]
@@ -291,8 +291,9 @@ def depool(dZ, Y_p, I, pr, pd, pf, af):
     pd_x, pd_y = pd
     area = pd_x * pd_y
     dA = np.zeros((pr_x[-1] + pd_x, pr_y[-1] + pd_y, d, n))
-    d = np.array([np.array([i for _ in range(n)]) for i in range(d)])
-    n = np.array([np.array([j for j in range(n)]) for _ in range(d)])
+    
+    d_i = np.array([[i for _ in range(n)] for i in range(d)])
+    n_i = np.array([[j for j in range(n)] for _ in range(d)])
     
     dY = None
     if af == 'elu':
@@ -303,8 +304,8 @@ def depool(dZ, Y_p, I, pr, pd, pf, af):
     for x in range(w_Z):
         for y in range(h_Z):
             if pf == 'max':
-                I_ = I[x, y].reshape(1, 1, d, n)
-                dA[pr_x[x] + I_ // pd_x, pr_y[y] + I_ % pd_x, d, n] += dY[x, y]
+                I_ = I[x, y].reshape(d, n)
+                dA[pr_x[x] + I_ // pd_x, pr_y[y] + I_ % pd_x, d_i, n_i] += dY[x, y]
             elif pf == 'mean':
                 dY_ = dY[x, y].reshape(1, 1, d, n)
                 dA[pr_x[x]:pr_x[x] + pd_x, pr_y[y]:pr_y[y] + pd_y] += dY_ / area

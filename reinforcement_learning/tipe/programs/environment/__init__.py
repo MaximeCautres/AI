@@ -17,8 +17,31 @@ def show_stats(stats, t):
 def collide(areas, p):
     return np.sum((areas[0] <= p[0]) * (p[0] <= areas[2]) * (areas[1] <= p[1]) * (p[1] <= areas[3]), axis=0)
 
-
+"""
 def get_map(n, w, h, p=6, q=1):
+    
+    [x-, y-, x+, y+]
+    obs -- (4, p, n)
+    goal -- (4, q, n)
+    pos -- (2, 1, n)
+    vel -- (2, 1, n)
+    
+    obs_brut = np.array([[4, 5, 6, 19], [18, 5, 20, 19]], dtype=int)
+    #obs_brut = np.array([[0, 16, 13, 19], [23, 14, 39, 17], [0, 0, 18, 3], [26, 0, 39, 3], [0, 30, 14, 33], [27, 27, 30, 39]], dtype=int)
+    obs = np.broadcast_to(obs_brut.T.reshape(4, p, 1), (4, p, n))
+
+    possible_goal = [[0, 34, 4, 38], [31, 35, 35, 39], [35, 18, 39, 22], [4, 25, 8, 29], [0, 4, 4, 8], [27, 9, 31, 13]]
+    goal_brut = np.array([[possible_goal[randrange(0, len(possible_goal))] for _ in range(n)]], dtype=int)
+    goal_brut =
+    goal = goal_brut.T.reshape(4, q, n)
+
+    pos = get_spawn(np.concatenate((obs, goal), axis=1), n, w, h)
+    vel = np.zeros((2, 1, 1), dtype=int)
+
+    return obs, goal, pos, vel"""
+
+
+def get_map(n, w, h, p=2, q=1):
     """
     [x-, y-, x+, y+]
     obs -- (4, p, n)
@@ -26,13 +49,12 @@ def get_map(n, w, h, p=6, q=1):
     pos -- (2, 1, n)
     vel -- (2, 1, n)
     """
-    # obs_brut = np.array([[4, 5, 6, 19], [18, 5, 20, 19]], dtype=int)
-    obs_brut = np.array([[0, 16, 13, 19], [23, 14, 39, 17], [0, 0, 18, 3], [26, 0, 39, 3], [0, 30, 14, 33], [27, 27, 30, 39]], dtype=int)
+
+    obs_brut = np.array([[4, 5, 6, 19], [18, 5, 20, 19]], dtype=int)
     obs = np.broadcast_to(obs_brut.T.reshape(4, p, 1), (4, p, n))
 
-    possible_goal = [[0, 34, 4, 38], [31, 35, 35, 39], [35, 18, 39, 22], [4, 25, 8, 29], [0, 4, 4, 8], [27, 9, 31, 13]]
-    goal_brut = np.array([[possible_goal[randrange(0, len(possible_goal))] for _ in range(n)]], dtype=int)
-    goal = goal_brut.T.reshape(4, q, n)
+    goal_brut = np.array([[[10, 10, 14, 14]]], dtype=int)
+    goal = np.broadcast_to(goal_brut.T.reshape(4, q, 1), (4, q, n))
 
     pos = get_spawn(np.concatenate((obs, goal), axis=1), n, w, h)
     vel = np.zeros((2, 1, 1), dtype=int)
