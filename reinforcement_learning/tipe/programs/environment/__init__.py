@@ -17,6 +17,7 @@ def show_stats(stats, t):
 def collide(areas, p):
     return np.sum((areas[0] <= p[0]) * (p[0] <= areas[2]) * (areas[1] <= p[1]) * (p[1] <= areas[3]), axis=0)
 
+
 """
 def get_map(n, w, h, p=6, q=1):
     
@@ -137,19 +138,21 @@ class Simulation:
 
         return collide(borders, p)
 
-    def transform(self, array_in, result='None'):
+    def transform(self, array_in, proba=None, result='None'):
 
         array = np.moveaxis(array_in, -1, 1).reshape(*((-1,) + array_in.shape[1:-1]))
         ac = self.actions.shape[0]
-        k = array.size
+        k = array.shape[0]
         array_out = array
 
         if result == 'win':
-            array_out = np.zeros((k, ac))
-            array_out[range(k), array] = 1
+
+            # array_out = np.zeros((k, ac))
+            # array_out[range(k), array] = 1
         elif result == 'loose':
-            array_out = np.full((k, ac), 1 / (ac - 1))
-            array_out[range(k), array] = 0
+
+            # array_out = np.full((k, ac), 1 / (ac - 1))
+            # array_out[range(k), array] = 0
 
         return list(array_out)
 
@@ -168,6 +171,7 @@ class Simulation:
         - labels -- the list where the label corresponding to an end are stocked
         - life_time -- maximal number of decisions in a game
         - life -- current number of decisions
+        - log -- (t, w, h, 2*d, igc)
         """
 
         w, h, d = self.dims
@@ -207,7 +211,7 @@ class Simulation:
             self.igc = len(in_game)
 
             features += self.transform(log_img[..., win]) + self.transform(log_img[..., loose])
-            labels += self.transform(log_act[:, win], 'win') + self.transform(log_act[:, loose], 'loose')
+            labels += self.transform(log_act[:, win], prob[:, win], 'win') + self.transform(log_act[:, loose], prob[:, loose], 'loose')
 
             self.obs = self.obs[..., in_game]
             self.goal = self.goal[..., in_game]
@@ -231,9 +235,9 @@ class Simulation:
 
         for epoch in range(1, epoch_count + 1):
 
-            features, labels, win_rate = self.make_a_batch(parameters, batch_size, eps)
-            if 0 < features.size + labels.size:
-                gradients = backward(parameters, features, labels)
+            features, grad, win_rate = self.make_a_batch(parameters, batch_size, eps)
+            if 0 < features.size + grad.size:
+                gradients = backward(parameters, features, grad)
                 parameters = update_parameters(parameters, gradients, alpha)
             win_rates.append(win_rate)
 

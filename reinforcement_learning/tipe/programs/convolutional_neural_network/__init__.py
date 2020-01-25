@@ -103,13 +103,14 @@ def forward(parameters, X, return_cache=False):
         return a
 
 
-def backward(parameters, X, y):
+def backward(parameters, X, da):
     gradients = {}
     n = X.shape[3]
     cache = forward(parameters, X, True)
-    y_hat = cache['a' + str(parameters['Ld'] - 1)]
 
-    da = np.divide(1 - y, 1 - y_hat) - np.divide(y, y_hat)
+    # y_hat = cache['a' + str(parameters['Ld'] - 1)]
+    # da = np.divide(1 - y, 1 - y_hat) - np.divide(y, y_hat)
+
     dz = None
 
     for l in reversed(range(1, parameters['Ld'])):
@@ -119,7 +120,8 @@ def backward(parameters, X, y):
         if af == 'relu':
             dz = da * relu_prime(z)
         elif af == 'softmax':
-            dz = y_hat - y
+            # dz = y_hat - y
+            dz = da * softmax_prime(z)
 
         a_p = cache['a' + str(l - 1)]
         w = parameters['w' + str(l)]
@@ -368,3 +370,8 @@ def elu_prime(z, eta=1):
 
 def softmax(z):
     return np.divide(np.exp(z), np.sum(np.exp(z), axis=0, keepdims=True))
+
+
+def softmax_prime(z):
+    soft = softmax(z)
+    return soft * (1 - soft)

@@ -2,7 +2,7 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_2'
+file_name = 'parameters_0'
 import_file = True
 begin_with = ''
 
@@ -23,7 +23,8 @@ else:
                   'lt2': 'p', 'ss2': (3, 3), 'pd2': (4, 4),
                   'lt3': 'c', 'kd3': (4, 4, 6),
                   'lt4': 'p', 'ss4': (3, 3), 'pd4': (4, 4)}
-    dnn_topology = (6 * 6 * 6, 24, len(actions)) """
+    dnn_topology = (6 * 6 * 6, 24, len(actions))
+    """
     parameters = {'Lc': 3, 'idi': dimension[:2] + (2,),
                   'lt1': 'c', 'kd1': (3, 3, 4),
                   'lt2': 'p', 'ss2': (2, 2), 'pd2': (3, 3)}
@@ -34,5 +35,5 @@ else:
     else:
         parameters = initialize_parameters(parameters, dnn_topology)
 
-    parameters = simulation.train(parameters, 10**-1, 100, 1000, 10)
+    parameters = simulation.train(parameters, 10**-1, 64, 128, 8)
     pickle.dump(parameters, open(file_name, 'wb'))
