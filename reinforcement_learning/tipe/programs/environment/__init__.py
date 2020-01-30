@@ -138,22 +138,26 @@ class Simulation:
 
         return collide(borders, p)
 
-    def transform(self, array_in, proba=None, result='None'):
+    def log_to_features(self, array_in):
 
-        array = np.moveaxis(array_in, -1, 1).reshape(*((-1,) + array_in.shape[1:-1]))
-        ac = self.actions.shape[0]
-        k = array.shape[0]
-        array_out = array
-        
-        if result == 'win':
-            array_out = np.zeros((k, ac))
-            array_out[range(k), array] = 1
-        elif result == 'loose':
-            array_out = np.full((k, ac), 1 / (ac - 1))
-            array_out[range(k), array] = 0
+        array_out = np.moveaxis(array_in, -1, 1).reshape(*((-1,) + array_in.shape[1:-1]))
 
         return list(array_out)
 
+
+    def log_to_gradients(self, array_in, result):
+
+        ac = len(self.actions)
+        epsilon = (-1)**(result <> win)
+        length, _, c = array_in.shape
+        gammas = (gamma ** np.arange(length - 1, -1,  -1)).reshape(length, 1, 1)
+        inter = np.zeros(length, ac, c)
+        inter[array_in] = 1
+        inter = inter *  gammas * epsilon
+        
+        
+
+    
     def make_a_batch(self, parameters, n, epsilon=0.):
         """
         This function creates the experience batches used in the policy gradient algorithm.
@@ -183,7 +187,7 @@ class Simulation:
         log_img = np.concatenate((init, init), axis=2).reshape(1, w, h, 2*d, n)
         log_act = None
         features = []
-        labels = []
+        gradients = []
 
         while life < self.life_time and 0 < self.igc:
 
@@ -208,8 +212,8 @@ class Simulation:
             in_game = [i for i in range(self.igc) if not (i in win or i in loose)]
             self.igc = len(in_game)
 
-            features += self.transform(log_img[..., win]) + self.transform(log_img[..., loose])
-            labels += self.transform(log_act[:, win], prob[:, win], 'win') + self.transform(log_act[:, loose], prob[:, loose], 'loose')
+            features += self.log_to_features(log_img[..., win]) + self.log_to_features(log_img[..., loose])
+            gradients += self.log_to_gradients(log_act[:, win], 'win') + self.log_to_gradients(log_act[:, loose], 'loose')
 
             self.obs = self.obs[..., in_game]
             self.goal = self.goal[..., in_game]
