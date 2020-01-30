@@ -144,15 +144,13 @@ class Simulation:
         ac = self.actions.shape[0]
         k = array.shape[0]
         array_out = array
-
+        
         if result == 'win':
-
-            # array_out = np.zeros((k, ac))
-            # array_out[range(k), array] = 1
+            array_out = np.zeros((k, ac))
+            array_out[range(k), array] = 1
         elif result == 'loose':
-
-            # array_out = np.full((k, ac), 1 / (ac - 1))
-            # array_out[range(k), array] = 0
+            array_out = np.full((k, ac), 1 / (ac - 1))
+            array_out[range(k), array] = 0
 
         return list(array_out)
 

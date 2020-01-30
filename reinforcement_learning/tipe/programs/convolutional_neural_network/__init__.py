@@ -151,12 +151,12 @@ def backward(parameters, X, da):
 
 
 def update_parameters(parameters, gradients, alpha):
-    for l in range(1, parameters['Lc']):
+    for l in range(1, parameters['Lc']): # here we are in a gradient ascent so we use + instead of minus
         if parameters['lt' + str(l)] == 'c':
-            parameters['K' + str(l)] -= alpha * gradients['dK' + str(l)]
+            parameters['K' + str(l)] += alpha * gradients['dK' + str(l)]
     for l in range(1, parameters['Ld']):
-        parameters['w' + str(l)] -= alpha * gradients['dw' + str(l)]
-        parameters['b' + str(l)] -= alpha * gradients['db' + str(l)]
+        parameters['w' + str(l)] += alpha * gradients['dw' + str(l)]
+        parameters['b' + str(l)] += alpha * gradients['db' + str(l)]
     return parameters
 
 
