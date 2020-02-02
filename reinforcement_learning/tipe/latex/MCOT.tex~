@@ -122,7 +122,7 @@ actions pour un état donné (fondé sur de la valuation) {\bfseries
   [8]}, soit il apprend une politique de fonctionnement c'est-à-dire
 une fonction qui à une situation associe une action (fondé sur des
 politiques) {\bfseries [9]}. Toutes ces techniques utilisent des
-algorithmes d'apprentissage, le plus connu étant la rétro-propagation
+algorithmes d'apprentissages, le plus connu étant la rétro-propagation
 {\bfseries [5]}. Cela permet de partir d'un réseau de neurones
 aléatoirement définis pour, au fur et à mesure des étapes
 d'entraînement, converger vers le cerveau qui répond le plus justement

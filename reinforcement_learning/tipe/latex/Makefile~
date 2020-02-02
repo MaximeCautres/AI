@@ -9,6 +9,7 @@ pdf:
 	#@bibtex MCOT
 	@pdflatex MCOT.tex
 	@pdflatex  --synctex=1  MCOT.tex
+	@evince MCOT.pdf
 
 clean:
 	@echo "Cleaning files..."
