@@ -144,21 +144,22 @@ class Simulation:
 
         return list(array_out)
 
-
-    def log_to_gradients(self, array_in, result):
+    def log_to_gradients(self, array_in, gamma, result):
 
         ac = len(self.actions)
-        epsilon = (-1)**(result <> win)
-        length, _, c = array_in.shape
-        gammas = (gamma ** np.arange(length - 1, -1,  -1)).reshape(length, 1, 1)
-        inter = np.zeros(length, ac, c)
-        inter[array_in] = 1
-        inter = inter *  gammas * epsilon
-        
-        
+        length, c = array_in.shape
+        epsilon = (result == 'win') - (result == 'loose')
+        gammas = (gamma ** np.flip(np.arange(length))).reshape(length, 1, 1)
+        t_i = np.array([[i for _ in range(c)] for i in range(length)], dtype=int)
+        c_i = np.array([[j for j in range(c)] for _ in range(length)], dtype=int)
 
+        inter = np.zeros((length, c, ac))
+        inter[t_i, c_i, array_in] = 1
+        gradients = (inter * gammas).reshape(-1, ac) * epsilon
+
+        return list(gradients)
     
-    def make_a_batch(self, parameters, n, epsilon=0.):
+    def make_a_batch(self, parameters, n, gamma=1, epsilon=0.):
         """
         This function creates the experience batches used in the policy gradient algorithm.
         - w, h, d -- dimension of the map's image
@@ -195,11 +196,11 @@ class Simulation:
             img = log_img[-1]
             prob = forward(parameters, img)
 
-            # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
-            a = np.argmax(prob, axis=0)
+            a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+            # a = np.argmax(prob, axis=0)
             action = self.actions[a].T.reshape(2, 1, self.igc)
-            index = np.random.random(self.igc) < epsilon
-            action[..., index] = np.random.randint(len(self.actions), size=np.count_nonzero(index))
+            # index = np.random.random(self.igc) < epsilon
+            # action[..., index] = np.random.randint(len(self.actions), size=np.count_nonzero(index))
 
             new_act = np.array([a])
             if log_act is not None:
@@ -213,7 +214,7 @@ class Simulation:
             self.igc = len(in_game)
 
             features += self.log_to_features(log_img[..., win]) + self.log_to_features(log_img[..., loose])
-            gradients += self.log_to_gradients(log_act[:, win], 'win') + self.log_to_gradients(log_act[:, loose], 'loose')
+            gradients += self.log_to_gradients(log_act[:, win], gamma, 'win') + self.log_to_gradients(log_act[:, loose], gamma, 'loose')
 
             self.obs = self.obs[..., in_game]
             self.goal = self.goal[..., in_game]
@@ -226,24 +227,21 @@ class Simulation:
             log_img = np.concatenate((log_img[..., in_game], new_img), axis=0)
             log_act = log_act[:, in_game]
 
-        return np.moveaxis(features, 0, -1), np.moveaxis(labels, 0, -1), win_count / n
+        return np.moveaxis(features, 0, -1), np.moveaxis(gradients, 0, -1), win_count / n
 
-    def train(self, parameters, alpha, batch_size, epoch_count, print_length):
+    def train(self, parameters, alpha, gamma, batch_size, epoch_count, print_length):
 
         time_point = time.time()
         stats = {'mean': [], 'min': [], 'max': []}
         win_rates = []
-        eps = 0.2
 
         for epoch in range(1, epoch_count + 1):
 
-            features, grad, win_rate = self.make_a_batch(parameters, batch_size, eps)
+            features, grad, win_rate = self.make_a_batch(parameters, batch_size, gamma)
             if 0 < features.size + grad.size:
                 gradients = backward(parameters, features, grad)
                 parameters = update_parameters(parameters, gradients, alpha)
             win_rates.append(win_rate)
-
-            eps *= 0.999
 
             if not epoch % print_length:
 
@@ -312,8 +310,8 @@ class Simulation:
                     if event.type == pygame.MOUSEBUTTONDOWN:
 
                         life += 1
-                        # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
-                        a = np.argmax(prob, axis=0)
+                        a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+                        # a = np.argmax(prob, axis=0)
                         action = self.actions[a].T.reshape(2, 1, 1)
 
                         new_pos = self.pos + self.vel + action

@@ -151,7 +151,7 @@ def backward(parameters, X, da):
 
 
 def update_parameters(parameters, gradients, alpha):
-    for l in range(1, parameters['Lc']): # here we are in a gradient ascent so we use + instead of minus
+    for l in range(1, parameters['Lc']):  # here we gradient ascend so we use + instead of -
         if parameters['lt' + str(l)] == 'c':
             parameters['K' + str(l)] += alpha * gradients['dK' + str(l)]
     for l in range(1, parameters['Ld']):
@@ -212,7 +212,7 @@ def pool(A, pr, pd, pf, af):
     Indices = None
     
     if pf == 'max':
-        Indices = np.zeros((w_Z, h_Z, d, n), dtype = int)
+        Indices = np.zeros((w_Z, h_Z, d, n), dtype=int)
     
     for i in range(w_Z):
         x = pr_x[i]
