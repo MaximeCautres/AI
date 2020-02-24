@@ -59,10 +59,10 @@
   $\pi_{\theta}(s)$: policy function
 
 \item
-  $\mathcal r(s, a, s')$: instant reward
+  $r(s, a, s')$: instant reward
 
 \item
-  $R(s, a)= \sum_{s' \in \Phi(s, a)} \mathcal T(s' | s, a)* \mathcal r(s, a, s')$
+  $R(s, a)= \sum_{s' \in \Phi(s, a)} \mathcal T(s' | s, a)* r(s, a, s')$
  
 \end{itemize}
 
@@ -73,7 +73,7 @@
 \begin{itemize}
 
 \item
-  $(e_i)_{i \in \llbracket 1; N \rrbracket} / \forall i \in \llbracket 1; N \rrbracket, e_i = (S_t^i, A^i_t, R^i_t = \mathcal r(S_{t-1}^i, A_{t-1}^i, S_t^i))_{t \in \llbracket 1, L_i \rrbracket}$
+  $(e_i)_{i \in \llbracket 1; N \rrbracket} / \forall i \in \llbracket 1; N \rrbracket, e_i = (S_t^i, A^i_t, R^i_t = r(S_{t-1}^i, A_{t-1}^i, S_t^i))_{t \in \llbracket 1, L_i \rrbracket}$
 
 \item $C_s = \{(i, t)/ S^i_t = s\}$
 \item
