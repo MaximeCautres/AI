@@ -98,13 +98,21 @@
 \item
   Bellmans's equation for the Q value function
   \begin{align}
-    \mathcal Q(s, a) &=  \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s, a}}G^i_t \\
-    \mathcal Q(s, a) &=  \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s, a}}R^i_t + \gamma G^i_{t+1} \\
-    \mathcal Q(s, a) &=  \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s, a}}R^i_t + \gamma V(S_{t+1}^i) \\
-    \mathcal Q(s, a) &=  \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s, a}}R^i_t + \gamma \sum_{a'\in \Gamma(S_{t+1}^i)} \pi(a' | S_{t+1}^i)\mathcal Q(S_{t+1}^i, a')
+    \mathcal Q(s, a) &= \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s,
+        a}}G^i_t \\ \mathcal Q(s, a) &= \frac{1}{|U_{s, a}|}\sum_{(i,
+      t) \in U_{s, a}}R^i_t + \gamma G^i_{t+1} \\ \mathcal Q(s, a) &=
+    \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s, a}}R^i_t + \gamma
+    V(S_{t+1}^i) \\ \mathcal Q(s, a) &= \frac{1}{|U_{s, a}|}\sum_{(i,
+      t) \in U_{s, a}}R^i_t + \gamma \sum_{a'\in \Gamma(S_{t+1}^i)}
+    \pi(a' | S_{t+1}^i)\mathcal Q(S_{t+1}^i, a')
   \end{align}
   
 \end{itemize}
+
+
+\[\mathcal J(\theta) = \sum_{s\in \mathcal S}d^{\pi}(s)\mathcal V^{\pi}(s) \]
+\[ \mathcal r_{\theta} \mathcal J(\theta) = \mathcal r_{\theta} \sum_{s\in \mathcal S}d^{\pi}(s)\sum_{a \in \mathcal A}\mathcal Q^{\pi}(s,a)\pi_{\theta}(a|s)\]
+\[ \mathcal r_{\theta} \mathcal J(\theta) = \propto \sum_{s\in \mathcal S}d^{\pi}(s)\sum_{a \in \mathcal A}\mathcal Q^{\pi}(s,a)\mathcal r_{\theta}\pi_{\theta}(a|s)\]
 
 
 
