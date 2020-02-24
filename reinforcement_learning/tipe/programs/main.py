@@ -7,7 +7,7 @@ import_file = False
 begin_with = ''
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
-actions = np.array([[i, j] for i in [-1, 0, 1] for j in [-1, 0, 1]])
+actions = np.array([[i, j] for i in [-1, 0, 1] for j in [-1, 0, 1] if i != 0 or j != 0])
 dimension = (25, 25, 1)
 
 simulation = Simulation(dimension, color_map, actions, 12, 40)
@@ -35,5 +35,5 @@ else:
     else:
         parameters = initialize_parameters(parameters, dnn_topology)
 
-    parameters = simulation.train(parameters, 10**-1, 0.94, 512, 2048, 16)
+    parameters = simulation.train(parameters, 10**-1, 0.94, 128, 2048, 1)
     pickle.dump(parameters, open(file_name, 'wb'))

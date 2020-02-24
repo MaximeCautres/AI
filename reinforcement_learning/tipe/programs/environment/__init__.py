@@ -139,24 +139,26 @@ class Simulation:
         return collide(borders, p)
 
     def log_to_features(self, array_in):
-
-        array_out = np.moveaxis(array_in, -1, 1).reshape(*((-1,) + array_in.shape[1:-1]))
-
+        
+        _, w, h, d, _ = array_in.shape
+        array_out = np.moveaxis(array_in, -1, 1).reshape(-1, w, h, d)
+        
         return list(array_out)
 
     def log_to_gradients(self, array_in, gamma, result):
-
+        
         ac = len(self.actions)
         length, c = array_in.shape
         epsilon = (result == 'win') - (result == 'loose')
         gammas = (gamma ** np.flip(np.arange(length))).reshape(length, 1, 1)
+
         t_i = np.array([[i for _ in range(c)] for i in range(length)], dtype=int)
         c_i = np.array([[j for j in range(c)] for _ in range(length)], dtype=int)
 
         inter = np.zeros((length, c, ac))
         inter[t_i, c_i, array_in] = 1
-        gradients = (inter * gammas).reshape(-1, ac) * epsilon
-
+        gradients = (inter * gammas).reshape(-1, ac) * epsilon 
+       
         return list(gradients)
     
     def make_a_batch(self, parameters, n, gamma=1, epsilon=0.):
@@ -196,8 +198,8 @@ class Simulation:
             img = log_img[-1]
             prob = forward(parameters, img)
 
-            a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
-            # a = np.argmax(prob, axis=0)
+            # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+            a = np.argmax(prob, axis=0)
             action = self.actions[a].T.reshape(2, 1, self.igc)
             # index = np.random.random(self.igc) < epsilon
             # action[..., index] = np.random.randint(len(self.actions), size=np.count_nonzero(index))

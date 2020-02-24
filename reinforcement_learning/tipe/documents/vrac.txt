@@ -21,3 +21,5 @@ cartes quelconques de format fixe
 bateau plus grand qu'une case, système de hit box sur les déplacements
 adaptabilité des actions en fonction du déplacement et du type de bateau
 trouver des intermédiaires d'entrainement
+
+https://www.youtube.com/watch?v=t3m4MnZa_FY
