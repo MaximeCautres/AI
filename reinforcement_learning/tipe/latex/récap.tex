@@ -1,0 +1,119 @@
+\documentclass[8pt,a4paper]{extarticle}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage[french]{babel}\usepackage[french]{babel}
+\frenchbsetup{StandardLists=true} % à inclure si on utilise \usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{amsfonts}
+\usepackage{stmaryrd}
+\usepackage{xfrac}
+\usepackage{dsfont}
+\usepackage{fancybox}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{textcomp}
+\usepackage{mathrsfs}
+\usepackage[svgnames]{xcolor}
+\usepackage{color}
+\usepackage{listings}
+\newcommand{\ud}{\mathrm{d}}
+\newcommand{\hsp}{\hspace{20pt}}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+
+
+\begin{document}
+
+\section*{Les ensembles}
+
+\begin{multicols}{2}
+
+\begin{itemize}
+
+\item
+  $\theta$: parameters
+\item
+  $\mathcal{A}$: action set
+\item
+  $\mathcal{S}$: State set
+\item
+  $\mathcal V$: The value-function
+\item
+  $\mathcal Q$: the Q-value
+\item
+  $\Phi(s, a)$: accessible states 
+
+\item
+  $\mathcal T(s' | s, a)$: Transition function
+  
+\item
+  $\Gamma (s) = \{ a \in \mathcal{A} | \exists s' \in \mathcal S / \mathcal T (s' | s, a) \neq 0 \}$
+
+\item
+  $\pi_{\theta}(s)$: policy function
+
+\item
+  $r(s, a, s')$: instant reward
+
+\item
+  $R(s, a)= \sum_{s' \in \Phi(s, a)} \mathcal T(s' | s, a)* r(s, a, s')$
+ 
+\end{itemize}
+
+\end{multicols}
+
+\section*{Formules}
+
+\begin{itemize}
+
+\item
+  $(e_i)_{i \in \llbracket 1; N \rrbracket} / \forall i \in \llbracket 1; N \rrbracket, e_i = (S_t^i, A^i_t, R^i_t = r(S_{t-1}^i, A_{t-1}^i, S_t^i))_{t \in \llbracket 1, L_i \rrbracket}$
+
+\item $C_s = \{(i, t)/ S^i_t = s\}$
+\item
+  $U_{s, a}= \{ (i, t) \in C_s / A_t^i = a\}$
+\item
+  $K_{s, a , s'}= \{(i, t) \in U_{s, a} / S_{t+1}^i = s'\}$
+\item
+  $G_t^i = \sum_{k=0}^{L_i - t}\gamma^k R^i_{t+k}$: Gain function
+\item
+  $\mathcal T(s' | s, a) \approx \frac{|K_{s, a, s'}|}{|U_{s, a}|}$
+
+\item
+  Bellman's equation for the Valuation function
+  \begin{align}
+    \mathcal V(s) &= \frac{1}{|C_s|}\sum_{(i, t) \in C_s}G^i_t \\
+    \mathcal V(s) &= \frac{1}{|C_s|}\sum_{(i, t) \in C_s} R^i_t + \gamma G^i_{t+1}  \\
+    \mathcal V(s) &= \frac{1}{|C_s|}\sum_{(i, t) \in C_s} R^i_t + \gamma V(S_{t+1}^i) \\
+    \mathcal V(s) &= \sum_{a\in \Gamma(s)}\frac{|U_{s, a}|}{\sum_{a'\in \Gamma(s)}|U_{s, a}|}*\mathcal Q(s, a) \\
+    \mathcal V(s) &= \sum_{a\in \Gamma(s)} \pi(a | s)\mathcal Q(s, a)
+  \end{align}
+
+\item
+  Bellmans's equation for the Q value function
+  \begin{align}
+    \mathcal Q(s, a) &= \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s,
+        a}}G^i_t \\ \mathcal Q(s, a) &= \frac{1}{|U_{s, a}|}\sum_{(i,
+      t) \in U_{s, a}}R^i_t + \gamma G^i_{t+1} \\ \mathcal Q(s, a) &=
+    \frac{1}{|U_{s, a}|}\sum_{(i, t) \in U_{s, a}}R^i_t + \gamma
+    V(S_{t+1}^i) \\ \mathcal Q(s, a) &= \frac{1}{|U_{s, a}|}\sum_{(i,
+      t) \in U_{s, a}}R^i_t + \gamma \sum_{a'\in \Gamma(S_{t+1}^i)}
+    \pi(a' | S_{t+1}^i)\mathcal Q(S_{t+1}^i, a')
+  \end{align}
+  
+\end{itemize}
+
+
+\[\mathcal J(\theta) = \sum_{s\in \mathcal S}d^{\pi}(s)\mathcal V^{\pi}(s) \]
+\[ \mathcal r_{\theta} \mathcal J(\theta) = \mathcal r_{\theta} \sum_{s\in \mathcal S}d^{\pi}(s)\sum_{a \in \mathcal A}\mathcal Q^{\pi}(s,a)\pi_{\theta}(a|s)\]
+\[ \mathcal r_{\theta} \mathcal J(\theta) = \propto \sum_{s\in \mathcal S}d^{\pi}(s)\sum_{a \in \mathcal A}\mathcal Q^{\pi}(s,a)\mathcal r_{\theta}\pi_{\theta}(a|s)\]
+
+
+
+\end{document}
