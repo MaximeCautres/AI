@@ -28,6 +28,7 @@ class Mdp:
         self.t = 0
 
         if visual_effect:
+            print("cou")
             self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit, background='black')
             self.canvas.pack(side=LEFT, padx=1, pady=1)
 
@@ -147,6 +148,7 @@ else:
 my_mdp = Mdp(*generate_mouse_world(16, 16, 0.2), 0.9, 6, 0.8)
 
 if window:
+    print("coucou")
     window.mainloop()
 else:
     parameters = [1, 2, 4, 8, 16, 32]

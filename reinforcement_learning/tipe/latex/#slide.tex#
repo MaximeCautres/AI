@@ -337,7 +337,8 @@
     \item Prise en compte de l'inertie
     \item Prise en compte des frottement visqueux
     \item Prise en compte des caractéristiques physique du bateaux
-    \item Un environnement qui représente un port 
+    \item Un environnement qui représente un port
+    \item Il doit être adaptable 
     \end{itemize}
 \end{block}
 
@@ -353,31 +354,30 @@
 
 \end{frame}
 
+\subsection{Notre implémentation}
 
 \begin{frame}
 
-  \frametitle{Algorithme et equation de bellman}
+  \frametitle{Visuellement}
 
-  \begin{block}{Initialisation}
-    On définit les $V^{\pi}(s, a)$ aléatoirement
-  \end{block}
-
-  \begin{block}{Récurrence}
-    \begin{itemize}
-    \item On effectue une simulation grâce à la formule (\ref{mouvementmdp})
-    \item Sur chaque état alors visité, on applique l'équation de Bellman:
-     \begin{align}
-       V^{\pi}_{t+1}(s, a)&=R(s, a)+\gamma \sum _{s'}P(s'|s, a)V^{\pi }_{t}(s') \\
-       \Leftrightarrow\footnotemark V^{\pi}_{t+1}(s, a)&=R(s, a)+\gamma V_t^{\pi}(s')
-     \end{align}
-     
-    \end{itemize}
-    \footnotetext{Ici l'équivalence vient de fait que l'environement n'est pas déterministe}
-  \end{block}
-  
-  \begin{block}{Terminaison}
-    On arrête l'algorithme lorsqu'un chemin jugé assez rapide est trouvé ou alors au bout d'un certains temps
-  \end{block}
+  \begin{figure}
+    \begin{minipage}[c]{.55\linewidth}
+      \centering
+      \input{markov.tex}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.37\linewidth}
+      \centering
+      \begin{itemize}
+      \item On utilise \textbf{les chaines de Markov deterministe}
+    \item Bleu pour l'état initial
+    \item Vert pour l'état final
+    \item Rouge pour les murs
+    \item a, b, c, d pour les actions
+    \item Une \textbf{récompense}
+      \end{itemize}
+    \end{minipage}
+  \end{figure}
 
 \end{frame}
 

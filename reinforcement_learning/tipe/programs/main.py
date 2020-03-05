@@ -3,7 +3,7 @@ from environment import *
 
 
 file_name = 'parameters_0'
-import_file = False
+import_file = True
 begin_with = ''
 
 color_map = {'obst': 1/3, 'goal': 2/3, 'self': 1}
