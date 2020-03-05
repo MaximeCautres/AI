@@ -18,6 +18,9 @@
 
 \usepackage{lmodern}
 \usepackage{tikz}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
 \usepackage{wrapfig}
 
 \newcommand{\tabitem}{%
@@ -136,7 +139,7 @@
       \centering
       \begin{itemize}
   \item Un environnement pour simuler les conditions réelles \break
-    \break \break \break \break \break \break \break
+    \break \break \break
   \end{itemize}
     \end{minipage}
   \end{figure}
@@ -185,14 +188,15 @@
       \pause
       \tabitem Simulation de l'environnement portuaire \\ \\
       \pause
-      \tabitem Seconde approche avec le Policy Gradients 
-      \end{tabular}
+      \tabitem Seconde approche avec le Policy Gradients
+    \end{tabular}
     \end{center}
 \end{frame}
 
 
 
-\section{Le Q-learning: Le problème des souris}
+\section{Le Q-learning}
+\subsection{Le problème des souris}
 
 \begin{frame}{allowframebreaks}{\label{2}}
   \frametitle{Un problème intermédiaire pour se lancer}
@@ -230,11 +234,11 @@
       \centering
       \begin{itemize}
       \item On utilise \textbf{les chaines de Markov deterministe}
-    \item Bleu pour l'état initial
-    \item Vert pour l'état final
-    \item Rouge pour les murs
-    \item a, b, c, d pour les actions
-    \item Une \textbf{récompense}
+    \item {\color{blue} Bleu} pour l'état initial
+    \item {\color{green} Vert} pour l'état final
+    \item {\color{red} Rouge} pour les murs
+    \item \textbf{a, b, c, d} pour les actions
+    \item Un système de \textbf{récompense}
       \end{itemize}
     \end{minipage}
   \end{figure}
@@ -257,7 +261,7 @@
       Le Q-learing:
       \begin{itemize}
       \item Une fonction de valuation: \begin{equation} V^{\pi}(s, a) \end{equation}
-        \item Pour ce déplacer:
+        \item Pour se déplacer:
           \begin{equation}{\label{mouvementmdp}}
             s' = \max_{a}(V^{\pi}(s, a))
           \end{equation}
@@ -270,7 +274,7 @@
 
 \begin{frame}
 
-  \frametitle{Algorithme et equation de bellman}
+  \frametitle{Algorithme et équation de Bellman}
 
   \begin{block}{Initialisation}
     On définit les $V^{\pi}(s, a)$ aléatoirement
@@ -286,11 +290,11 @@
      \end{align}
      
     \end{itemize}
-    \footnotetext{Ici l'équivalence vient de fait que l'environement n'est pas déterministe}
+    \footnotetext{Ici l'équivalence vient de fait que l'environnement est déterministe}
   \end{block}
   
   \begin{block}{Terminaison}
-    On arrête l'algorithme lorsqu'un chemin jugé assez rapide est trouvé ou alors au bout d'un certains temps
+    On arrête l'algorithme une solution optimal est trouvée ou si une limite de temps est dépassée
   \end{block}
 
 \end{frame}
@@ -324,7 +328,7 @@
   
 \end{frame}
 
-\section{L'environement}
+\section{L'environnement}
 
 \subsection{Le cahier des charges}
 
@@ -335,9 +339,10 @@
 \begin{block}{Objectif}
     \begin{itemize}
     \item Prise en compte de l'inertie
-    \item Prise en compte des frottement visqueux
-    \item Prise en compte des caractéristiques physique du bateaux
-    \item Un environnement qui représente un port 
+    \item Prise en compte des frottements visqueux
+    \item Prise en compte des caractéristiques physiques du bateau
+    \item Un environnement qui représente un port
+    \item Il doit être adaptable 
     \end{itemize}
 \end{block}
 
@@ -345,42 +350,82 @@
 
 \begin{block}{Contrainte}
     \begin{itemize}
-    \item Le modèle doit être très léger l'exécution
-    \item Autoriser l'execution en parrallèle
+    \item Le modèle doit être très rapide d'exécution
+    \item Autoriser l'exécution en parallèle
     \item Être représentable visuellement
     \end{itemize}
 \end{block}
 
 \end{frame}
 
+\subsection{Notre implémentation}
 
 \begin{frame}
 
-  \frametitle{Algorithme et equation de bellman}
+  \frametitle{Visuellement}
 
-  \begin{block}{Initialisation}
-    On définit les $V^{\pi}(s, a)$ aléatoirement
-  \end{block}
-
-  \begin{block}{Récurrence}
-    \begin{itemize}
-    \item On effectue une simulation grâce à la formule (\ref{mouvementmdp})
-    \item Sur chaque état alors visité, on applique l'équation de Bellman:
-     \begin{align}
-       V^{\pi}_{t+1}(s, a)&=R(s, a)+\gamma \sum _{s'}P(s'|s, a)V^{\pi }_{t}(s') \\
-       \Leftrightarrow\footnotemark V^{\pi}_{t+1}(s, a)&=R(s, a)+\gamma V_t^{\pi}(s')
-     \end{align}
-     
-    \end{itemize}
-    \footnotetext{Ici l'équivalence vient de fait que l'environement n'est pas déterministe}
-  \end{block}
-  
-  \begin{block}{Terminaison}
-    On arrête l'algorithme lorsqu'un chemin jugé assez rapide est trouvé ou alors au bout d'un certains temps
-  \end{block}
+  \begin{figure}
+    \begin{minipage}[c]{.55\linewidth}
+      \centering
+      \includegraphics[width=55mm]{map_v.png}
+      \caption{Rendu visuel de notre environnement \footnotemark}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.37\linewidth}
+      \centering
+      \begin{itemize}
+      \item Un environnement \textbf{discrétisé}
+    \item Blanc pour le bateau
+    \item Beige pour les murs
+    \item Violet pour l'objectif
+    \item Les cases rouges et vertes \textbf{montre les actions}
+      \end{itemize}
+    \end{minipage}
+  \end{figure}
+  \footnotetext{Les actions sont \textbf{seulement affichées pour l'utilisateur}, elle ne font pas parti de l'environnement}
 
 \end{frame}
 
+\begin{frame}
+
+  \frametitle{Visuellement}
+
+  \begin{figure}
+    \begin{minipage}[c]{.46\linewidth}
+      \centering
+      \input{trajec_example.tex}
+      \caption{Exemple de trajectoire de bateau}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.46\linewidth}
+      \centering
+      \begin{itemize}
+      \item En {\color{red} rouge} les positions successives du bateau
+      \item En {\color{purple} violet}, prise en compte de l'inertie (répétition du déplacement)
+      \item En {\color{lime} vert} les choix d'actions successifs (rayon 1 de autour de {\color{purple}violet} \footnotemark)
+      \item Sous python, \textbf{Numpy} permet la \textbf{vectorisation} et donc les \textbf{parties simultanées} (1000 parties prennent le même temps que une ou deux parties)
+      \end{itemize}
+    \end{minipage}
+  \end{figure}
+  \footnotetext{Ici, la zone est carré mais la forme peut varier pour augmenter l'aspect réaliste du modèle et s'adapter au caractéristique même du bateau.}
+
+\end{frame}
+
+
+\section{Le Policy Gradients}
+
+\subsection{Un peu de théorie}
+
+\subsection{Structure}
+
+\subsection{Résultats}
+
+
+\section*{Conclusion}
+
+\subsection{Objectif}
+
+\subsection{Ouverture}
 
 \end{document}
 
