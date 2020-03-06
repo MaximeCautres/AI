@@ -7,7 +7,6 @@
 \usepackage{mathdots}
 \usepackage{yhmath}
 \usepackage{cancel}
-\usepackage{color}
 \usepackage{siunitx}
 \usepackage{array}
 \usepackage{multirow}
@@ -15,6 +14,16 @@
 \usepackage{gensymb}
 \usepackage{tabularx}
 \usepackage{booktabs}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{amsfonts}
+\usepackage{stmaryrd}
+\usepackage{xfrac}
+\usepackage{dsfont}
+\usepackage{fancybox}
+\usepackage{multicol}
+\usepackage{color}
+
 
 \usepackage{lmodern}
 \usepackage{tikz}
@@ -43,7 +52,7 @@
 }
 
 %\logo{\includegraphics[height=10mm]{logo_limos_coul_def.png}}
-%\logo{\includegraphics[height=10mm]{logo_noir.png}}
+%\logo{\includegraphics[height=15mm]{logo_noir.png}}
 \logo{\includegraphics[height=10mm]{Logo-UCA.png}}
 
 
@@ -85,11 +94,11 @@
     \begin{minipage}[c]{.40\linewidth}
         \centering
         \begin{itemize}
-        \item Un métier dangereux (Le transfère du pilote)\break
+        \item Un métier \textbf{dangereux} (Le transfère du pilote)\break
           \pause
-        \item Un coût matériel important (Bateau ou hélicoptère)\break
+        \item Un \textbf{coût matériel} important (Bateau ou hélicoptère)\break
           \pause
-        \item Un coût financier important (7\% du coût de l'escale)
+        \item Un \textbf{coût financier} important (7\% du coût de l'escale)
         \end{itemize}
     \end{minipage}
     \footnotetext{http://escale.sinerj.org/spip.php?article41}
@@ -112,11 +121,11 @@
     \begin{minipage}[c]{.46\linewidth}
         \centering
         \begin{itemize}
-        \item Peu d'acteurs dans le domaine (Deux principaux avec Yanmar et Volvo) \break
+        \item \textbf{Peu d'acteurs} dans le domaine (Deux principaux avec Yanmar et Volvo) \break
           \pause
-        \item Nécessite des modifications importantes des infrastructures (capteurs, antennes) \break
+        \item Nécessite des modifications importantes des \textbf{infrastructures} (capteurs, antennes) \break
           \pause
-        \item Un dispositif très lent et peu adapté aux déplacements important dans un port 
+        \item Un dispositif \textbf{très lent et peu adapté} aux déplacements important dans un port 
         \end{itemize}
     \end{minipage}
      
@@ -402,7 +411,7 @@
       \begin{itemize}
       \item En {\color{red} rouge} les positions successives du bateau
       \item En {\color{purple} violet}, prise en compte de l'inertie (répétition du déplacement)
-      \item En {\color{lime} vert} les choix d'actions successifs (rayon 1 de autour de {\color{purple}violet} \footnotemark)
+      \item En {\color{green} vert} les choix d'actions successifs (rayon 1 de autour de {\color{purple}violet} \footnotemark)
       \item Sous python, \textbf{Numpy} permet la \textbf{vectorisation} et donc les \textbf{parties simultanées} (1000 parties prennent le même temps que une ou deux parties)
       \end{itemize}
     \end{minipage}
@@ -414,12 +423,117 @@
 
 \section{Le Policy Gradients}
 
-\subsection{Un peu de théorie}
+\subsection{La théorie}
 
-\subsection{Structure}
+\begin{frame}
+
+  \frametitle{Définissions et notations}
+
+  \begin{block}{La Politique et ses fonctions Gain, Q-Value, Value et Reward associées}
+    \begin{itemize}
+    \item La Politique
+      \begin{equation} \pi_{\theta}(s) = (p_i)_{i \in \llbracket 1, ac \rrbracket} / {\scalebox{0.85}{$\displaystyle \sum_{i = 1}^{ac}$}}p_i = 1  \end{equation}
+    \item Le Gain
+      \begin{equation} G_t = {\scalebox{0.85}{$\displaystyle \sum_{k=0}^{\infty}$}} \gamma^k R_{t+k+1} \end{equation}
+    \item La Q-value
+      \begin{equation} Q^\pi(s, a) = \mathbb{E}_{a\sim \pi} [G_t \vert S_t = s, A_t = a] \end{equation}
+    \item La Value
+      \begin{equation} V^\pi (s) = \mathbb{E}_{a\sim \pi} [G_t \vert S_t = s] \end{equation}
+    \item La Recompense, fonction Reward
+      \begin{equation} J(\theta) 
+= {\scalebox{0.85}{$\displaystyle \sum_{s \in \mathcal{S}}$}} d^\pi(s) V^\pi(s) 
+= {\scalebox{0.85}{$\displaystyle \sum_{s \in \mathcal{S}}$}} d^\pi(s) {\scalebox{0.85}{$\displaystyle  \sum_{a \in \mathcal{A}}$}} \pi_\theta(a \vert s) Q^\pi(s, a) \end{equation}
+    \end{itemize}
+  \end{block}
+  
+\end{frame}
+
+\begin{frame}[label=retourCNN]
+
+  \frametitle{La Politique}
+
+  \begin{block}{Un réseaux de neuronnes de convolution maison\footnotemark pour $\pi_{\theta}(s)$}
+    \begin{itemize}
+    \item $s$ correspond à l'entrée
+    \item $\pi_{\theta}(s)$ correspond à la sortie
+    \item $\theta$ correspond aux poids et biais du réseaux
+    \end{itemize}
+
+  \end{block}
+
+  \begin{figure}
+    
+    \begin{minipage}[c]{.28\linewidth}
+      \centering
+      \includegraphics[width=\linewidth]{map_v.png}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.04\linewidth}
+      \centering
+      $=$
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.43\linewidth}
+      \centering
+      \includegraphics[width=1.05\linewidth]{CNN.png}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.218\linewidth}
+      \centering \[ =
+      \left[
+      \begin{array}{c}
+        {\color{red}0.01}\\
+        {\color{green} 0.85}\\
+        {\color{red}0.01}\\
+        {\color{red}0.03}\\
+        {\color{red}0.04}\\
+        {\color{red}0.01}\\
+        {\color{red}0.02}\\
+        {\color{red}0.01}\\
+        {\color{red}0.02}
+      \end{array}
+      \right] \]
+    \end{minipage}
+  \end{figure}
+  \footnotetext{Nous utilisons ici \hyperlink{CNN}{notre implémentation sans librairies spécialisées du Convolutional Neural Network}}
+\end{frame}
+
+\begin{frame}[label=policyintroduction]
+  \frametitle{L'entrainement}
+  \begin{block}{L'initialisation}
+    On définit une structure pour le réseau de neurones où les poids et biais sont définis aléatoirement
+  \end{block}
+
+  \begin{block}{Par récurrence (En époques) \footnotemark}
+    \begin{itemize}
+    \item On effectue P parties en parallèle, on récupère:
+      \begin{center}
+      {\scalebox{0.85}{
+      $\left\{
+      \begin{array}{c}
+        S_0^1, A_0^1, R_0^1, \cdots, S_{f_1-1}^1, A_{f_1-1}^1, R_{f_1-1}^1, S^1_{f_1} \\
+        \vdots \\
+        S_0^P, A_0^P, R_0^P, \cdots, S_{f_P-1}^P, A_{f_P-1}^P, R_{f_P-1}^P, S^P_{f_P} 
+      \end{array}
+      \right. $}} \end{center}
+    \item Pour tout $i \in \llbracket 1, P \rrbracket$ et $t \in \llbracket 0, f_i - 1 \rrbracket$
+      \begin{align}
+        G_t^i &= {\scalebox{0.85}{$\displaystyle \sum_{k=O}^{f_i-t-2}$}} \gamma^k R^i_{t+k+1} \\
+        \theta &\leftarrow \theta + \alpha \gamma^t G^i_t \nabla_\theta \ln \pi_\theta(A^i_t \vert S^i_t)
+      \end{align}
+    
+    \end{itemize}
+
+  \end{block}
+
+  \footnotetext{Ceci résulte d'un \hyperlink{demopolicygradient}{théorème majeur sur le Policy Gradients}}
+\end{frame}
 
 \subsection{Résultats}
 
+\begin{frame}
+
+\end{frame}
 
 \section*{Conclusion}
 
@@ -427,5 +541,23 @@
 
 \subsection{Ouverture}
 
+\appendix
+
+\section*{Notre implémentation du CNN}
+
+\begin{frame}[label=CNN]
+  \frametitle{Un fait maison}
+  \hyperlink{retourCNN}{Retour}
+\end{frame}
+
+\section*{Proof of the Policy Gradient Theroem}
+
+\begin{frame}[label=demopolicygradient]
+  \frametitle{Bonsoir ici on se marre}
+
+  \hyperlink{policyintroduction}{Retour}
+  
+  klbuerbqhvhjbyerukbvhjqkjbrey
+\end{frame}
 \end{document}
 
