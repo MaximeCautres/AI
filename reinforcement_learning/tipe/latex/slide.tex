@@ -35,6 +35,8 @@
 \newcommand{\tabitem}{%
   \usebeamertemplate{itemize item}\hspace*{\labelsep}}
 
+\def\fin#1{\leavevmode\unskip\nobreak\quad\hspace*{\fill}{#1}}
+
 \usetheme{Warsaw}
 
 \title[IA et conduite autonome]{Utilisation de l'intelligence artificielle dans la manœuvre autonome de bateau}
@@ -52,8 +54,8 @@
 }
 
 %\logo{\includegraphics[height=10mm]{logo_limos_coul_def.png}}
-%\logo{\includegraphics[height=15mm]{logo_noir.png}}
-\logo{\includegraphics[height=10mm]{Logo-UCA.png}}
+\logo{\includegraphics[height=15mm]{logo_noir.png}}
+%\logo{\includegraphics[height=10mm]{Logo-UCA.png}}
 
 
 \begin{document}
@@ -169,7 +171,7 @@
       \centering
       \begin{itemize}
   \item Un environnement  \break
-  \item La techonologie des réseaux de neuronnes\break
+  \item La techonologie des réseaux de neurones\break
     \pause
   \item Des algorithmes d'entrainement
   \end{itemize}
@@ -299,7 +301,7 @@
      \end{align}
      
     \end{itemize}
-    \footnotetext{Ici l'équivalence vient de fait que l'environnement est déterministe}
+    \footnotetext{Ici l'équivalence vient du fait que l'environnement est déterministe}
   \end{block}
   
   \begin{block}{Terminaison}
@@ -310,7 +312,10 @@
 
 
 \begin{frame}
-\frametitle{Performance de la méthode}
+  \frametitle{Performance de la méthode}
+  \begin{center}
+    ici, il faut une image des performance au cours du temps sur le Q learning, je n'en ai pas trouver
+  \end{center}
 \end{frame}
 
 \begin{frame}
@@ -351,7 +356,6 @@
     \item Prise en compte des frottements visqueux
     \item Prise en compte des caractéristiques physiques du bateau
     \item Un environnement qui représente un port
-    \item Il doit être adaptable 
     \end{itemize}
 \end{block}
 
@@ -391,7 +395,7 @@
       \end{itemize}
     \end{minipage}
   \end{figure}
-  \footnotetext{Les actions sont \textbf{seulement affichées pour l'utilisateur}, elle ne font pas parti de l'environnement}
+  \footnotetext{Les actions sont \textbf{seulement affichées pour l'utilisateur}, elles ne font pas parties de l'environnement}
 
 \end{frame}
 
@@ -416,7 +420,7 @@
       \end{itemize}
     \end{minipage}
   \end{figure}
-  \footnotetext{Ici, la zone est carré mais la forme peut varier pour augmenter l'aspect réaliste du modèle et s'adapter au caractéristique même du bateau.}
+  \footnotetext{Ici, la zone est carré mais la forme peut varier pour augmenter l'aspect réaliste du modèle et s'adapter aux caractéristiques même du bateau.}
 
 \end{frame}
 
@@ -441,8 +445,9 @@
       \begin{equation} V^\pi (s) = \mathbb{E}_{a\sim \pi} [G_t \vert S_t = s] \end{equation}
     \item La Recompense, fonction Reward
       \begin{equation} J(\theta) 
-= {\scalebox{0.85}{$\displaystyle \sum_{s \in \mathcal{S}}$}} d^\pi(s) V^\pi(s) 
-= {\scalebox{0.85}{$\displaystyle \sum_{s \in \mathcal{S}}$}} d^\pi(s) {\scalebox{0.85}{$\displaystyle  \sum_{a \in \mathcal{A}}$}} \pi_\theta(a \vert s) Q^\pi(s, a) \end{equation}
+= {\scalebox{0.85}{$\displaystyle \sum_{s}$}} d^\pi(s) V^\pi(s) 
+= {\scalebox{0.85}{$\displaystyle \sum_{s}$}} d^\pi(s) {\scalebox{0.85}{$\displaystyle  \sum_{a}$}} \pi_\theta(a \vert s) Q^\pi(s, a)
+= \mathbb{E}_{\pi} [Q^{\pi}(s,a)] \end{equation}
     \end{itemize}
   \end{block}
   
@@ -452,11 +457,11 @@
 
   \frametitle{La Politique}
 
-  \begin{block}{Un réseaux de neuronnes de convolution maison\footnotemark pour $\pi_{\theta}(s)$}
+  \begin{block}{Un réseau de neurones de convolution maison\footnotemark pour $\pi_{\theta}(s)$}
     \begin{itemize}
     \item $s$ correspond à l'entrée
     \item $\pi_{\theta}(s)$ correspond à la sortie
-    \item $\theta$ correspond aux poids et biais du réseaux
+    \item $\theta$ correspond aux poids et biais du réseau
     \end{itemize}
 
   \end{block}
@@ -495,7 +500,7 @@
       \right] \]
     \end{minipage}
   \end{figure}
-  \footnotetext{Nous utilisons ici \hyperlink{CNN}{notre implémentation sans librairies spécialisées du Convolutional Neural Network}}
+  \footnotetext{Nous utilisons ici \hyperlink{CNN}{notre implémentation sans librairie spécialisée du Convolutional Neural Network}}
 \end{frame}
 
 \begin{frame}[label=policyintroduction]
@@ -529,17 +534,91 @@
   \footnotetext{Ceci résulte d'un \hyperlink{demopolicygradient}{théorème majeur sur le Policy Gradients}}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Quelques précisions sur les gradients: La rétropropagation}
+
+  \begin{block}{Initialisation}
+    On calcul les gradients de la dernière couche du réseau 
+  \end{block}
+
+  \begin{block}{Par récurrence}
+      On rétro propage les gradients sur l'ensemble du réseau de neurones grâce à l'astuce:
+      \[\frac{\partial \pi_{\theta}(s)}{\partial \theta} = \frac{\partial \pi_{\theta}(s)}{\partial a} \cdot \frac{\partial a}{\partial \theta} \]
+      Ce qui nous permet en accumulant ce principe de remonter couches par couches le réseau de neurones.
+  \end{block}
+\end{frame}
+
 \subsection{Résultats}
 
 \begin{frame}
+  \frametitle{Une implémentation naïve de Policy Gradient}
+  \framesubtitle{Avec un DNN}
+
+  \begin{figure}
+    \begin{minipage}[c]{.55\linewidth}
+      \centering
+      \includegraphics[width=55mm]{parameters_3-5h31m46s.png}
+      \caption{135000 époques de 100 parties, 82.35\% de réussite en 5h31m46s sur un cœur de CPU à 3,7 GHz}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.40\linewidth}
+      \centering
+      \begin{itemize}
+      \item En {\color{red}rouge} les performances moyennes  \break
+      \item En {\color{blue}bleu} la variance moyenne \break
+      \end{itemize}
+    \end{minipage}
+  \end{figure}
 
 \end{frame}
 
+\begin{frame}
+  \frametitle{Une implémentation naïve de Policy Gradient}
+  \framesubtitle{Avec un CNN}
+
+  \begin{figure}
+    \begin{minipage}[c]{.46\linewidth}
+      \centering
+      \includegraphics[height=30mm]{97-33_2.png}
+      \caption{42000 époques de 200 parties, 97.49\% de réussite en 19h26m27s sur 1 cœur de CPU à 3.7GHz}
+    \end{minipage}
+    \hfill%
+    \begin{minipage}[c]{.46\linewidth}
+      \centering
+      \includegraphics[height=30mm]{98-47_4.png}
+      \caption{42000 époques de 200 parties, 98.54\% de réussite en 18h27m42s sur 1 cœur de CPU à 3.7GHz}
+    \end{minipage}
+  \end{figure}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Une implémentation plus juste du Policy Gradient}
+  \framesubtitle{Avec un CNN}
+  Ici mettre les futures courbes
+\end{frame}
+
+
 \section*{Conclusion}
 
-\subsection{Objectif}
+\begin{frame}{Objectif}
+  \begin{itemize}
+    \item Réussir à faire stationner un bateau dans un port \break
+\item Programmer notre propre algorithme d'apprentissage par renforcement sans utiliser de librairie dédiée. \fin{\huge \checkmark} \break
+\item Créer une simulation discrète et réaliste d'un déplacement de bateau prenant en compte l'inertie et la viscosité. \fin{\huge \checkmark} \break
+\item Comprendre et réussir à manipuler les concepts sur lesquels sont basés l'intelligence artificielle. \fin{\huge \checkmark} \break
+\item Implémenter différentes technologies pour pouvoir comparer les performances et trouver la meilleure solution technique à notre problème. \fin{\huge $\sim$}
+  \end{itemize}
+\end{frame}
 
-\subsection{Ouverture}
+\begin{frame}{Ouverture}
+  \begin{itemize}
+  \item Implémentation de l'Actor Critic
+  \item Meilleurs algorithmes
+  \item Simulation encore plus réaliste
+  \end{itemize}
+\end{frame}
+
 
 \appendix
 
@@ -547,17 +626,91 @@
 
 \begin{frame}[label=CNN]
   \frametitle{Un fait maison}
+  \begin{center}
+    Il faudra peut être détailler ici le CNN et DNN et qu'est ce que le fait main"
+    \end{center}
   \hyperlink{retourCNN}{Retour}
 \end{frame}
 
-\section*{Proof of the Policy Gradient Theroem}
+\section*{Preuve du Policy Gradient Theroem (dans le cas épisodique)}
 
 \begin{frame}[label=demopolicygradient]
-  \frametitle{Bonsoir ici on se marre}
+  \frametitle{Développement de $\nabla_{\theta} V^{\pi}(s)$}
+
+%  \hyperlink{policyintroduction}{Retour}
+  
+    \begin{align*}
+      \nabla_{\theta}V^{\pi}(s) &= \nabla_{\theta} \big[ {\scalebox{0.85}{$\sum_a$}} \pi_{\theta}(a|s)Q^{\pi}(s,a) \big] \\
+      &= {\scalebox{0.85}{$\sum_a$}} \big[\nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a) + \pi_{\theta}(a|s) \nabla_{\theta} Q^{\pi}(s,a) \big] \\
+      &= {\scalebox{0.85}{$\sum_a$}} \big[\nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a) + \pi_{\theta}(a|s) \nabla_{\theta} {\scalebox{0.85}{$\sum_{s',r}$}}p(s', r |s,a)(r+V^{\pi}(s')) \big] \\
+      &= {\scalebox{0.85}{$\sum_a$}} \big[\nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a) + \pi_{\theta}(a|s) \nabla_{\theta} {\scalebox{0.85}{$\sum_{s'}$}}p(s'|s,a)\nabla_{\theta}V^{\pi}(s')) \big] \\
+      &= \Phi(s) + {\scalebox{0.85}{$\sum_a$}} \big[\pi_{\theta}(a|s) \nabla_{\theta} {\scalebox{0.85}{$\sum_{s'}$}}p(s'|s,a)\nabla_{\theta}V^{\pi}(s')) \big] \\
+      &= \Phi(s) + {\scalebox{0.85}{$\sum_{s'}$}}{\scalebox{0.85}{$\sum_a$}} \big[\pi_{\theta}(a|s) \nabla_{\theta} p(s'|s,a)\nabla_{\theta}V^{\pi}(s')) \big] \\
+      &= \Phi(s) + {\scalebox{0.85}{$\sum_{s'}$}}\rho^{\pi}(s\rightarrow s', 1)\nabla_{\theta}V^{\pi}(s')) \\
+      &= \Phi(s) + {\scalebox{0.85}{$\sum_{s'}$}}\rho^{\pi}(s\rightarrow s', 1)\nabla_{\theta} \big[ {\scalebox{0.85}{$\sum_a$}} \pi_{\theta}(a|s)Q^{\pi}(s',a) \big] \\
+      &= \Phi(s) + {\scalebox{0.85}{$\sum_{s'}$}}\rho^{\pi}(s\rightarrow s', 1)\Phi(s') + {\scalebox{0.85}{$\sum_{s''}$}}\rho^{\pi}(s\rightarrow s'', 1)\nabla_{\theta}V^{\pi}(s'')) \\
+      &= \cdots \\
+      &= {\scalebox{0.85}{$\sum_{\tilde s}$}}{\scalebox{0.85}{$\sum_{k}$}}\rho^{\pi}(s \rightarrow \tilde s, k)\phi(\tilde s)
+    \end{align*}
+
+\end{frame}
+
+ %begin{frame}
+% \frametitle{Développement de $\nabla_\theta J(\theta)$}
+%  Ici, nous devons supposer que les parties sont finies
+%  \begin{align*}
+%    \nabla_\theta J(\theta) &= \nabla_{\theta} {\scalebox{0.85}{$\sum_{s}$}} d^\pi(s) V^\pi(s) \\
+%    &= \nabla_{\theta}V^{\pi}(s_0) \\
+%    &= {\scalebox{0.85}{$\sum_{s}$}}{\scalebox{0.85}{$\sum_{k}$}}\rho^{\pi}(s_0 \rightarrow s, k)\phi( s)\\
+%    &= \big[{\scalebox{0.85}{$\sum_{s}$}}{\scalebox{0.85}{$\sum_{k}$}}\rho^{\pi}(s_0 \rightarrow s, k)\big] {\scalebox{0.85}{$\sum_{s}$}}\frac{{\scalebox{0.85}{$\sum_{k}$}}\rho^{\pi}(s_0 \rightarrow s, k)}{{\scalebox{0.85}{$\sum_{s}$}}{\scalebox{0.85}{$\sum_{k}$}}\rho^{\pi}(s_0 \rightarrow s, k)}\phi(s)\\
+%    &= \big[{\scalebox{0.85}{$\sum_{s}$}}{\scalebox{0.85}{$\sum_{k}$}}\rho^{\pi}(s_0 \rightarrow s, k)\big] {\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s)\phi(s)\\
+%    &= \propto {\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s)\phi(s)
+%  \end{align*}
+%  \hyperlink{policyintroduction}{Retour}
+%\end{frame}
+
+\begin{frame}
+  \frametitle{Développement de $\nabla_\theta J(\theta)$}
+  Ici, nous devons supposer que les parties sont finies (i.e. $k \in \llbracket 0, f_i - 1 \rrbracket$ au lieu de $k \in \llbracket 0, +\infty \llbracket$)
+  \begin{align*}
+    \nabla_\theta J(\theta) &= \nabla_{\theta} {\scalebox{0.85}{$\sum_{s_0}$}} d^\pi(s_0) V^\pi(s_0) \\
+    &= \nabla_{\theta}{\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)V^{\pi}(s_0) \\
+    &= {\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)\nabla_{\theta}V^{\pi}(s_0) \\
+    &= {\scalebox{0.85}{$\sum_{s_0}$}}p(s_0){\scalebox{0.85}{$\sum_{s}$}}{\scalebox{0.85}{$\sum_{k=0}^{f_i - 1}$}}\rho^{\pi}(s_0 \rightarrow s, k)\phi( s)\\
+    &= {\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)\big[{\scalebox{0.85}{$\sum_{k=0}^{f_i - 1}$}}{\scalebox{0.85}{$\sum_{s}$}}\rho^{\pi}(s_0 \rightarrow s, k)\big] {\scalebox{0.85}{$\sum_{s}$}}\frac{{\scalebox{0.85}{$\sum_{k}^{f_i}$}}\rho^{\pi}(s_0 \rightarrow s, k)}{{\scalebox{0.85}{$\sum_{s}$}}{\scalebox{0.85}{$\sum_{k=0}^{f_i-1}$}}\rho^{\pi}(s_0 \rightarrow s, k)}\phi(s)\\
+    &= {\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)\big[{\scalebox{0.85}{$\sum_{k=0}^{f_i-1}$}}1\big] {\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s)\phi(s)\\
+    &= {\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)f_i {\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s)\phi(s)\\
+    &= {\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)f_i {\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}}\nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a)\\
+    &= f_i\big[{\scalebox{0.85}{$\sum_{s_0}$}}p(s_0)\big] \big[ {\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}} \nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a)\big]\\
+    &= f_i\big[{\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}} \nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a)\big]
+  \end{align*}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Utilisation de $\nabla_\theta J(\theta)$}
+  Si l'on suppose maintenant que tout les parties ont une durée proche:
+  \begin{align*}
+    \nabla_\theta J(\theta) &= f_i\big[{\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}} \nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a)\big] \\
+    &= \propto \big[{\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}} \nabla_{\theta}\pi_{\theta}(a|s)Q^{\pi}(s,a)\big] \\
+    &= \propto \big[{\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}} \pi_{\theta}(a|s) \frac{\nabla_{\theta}\pi_{\theta}(a|s)}{\pi_{\theta}(a|s)}Q^{\pi}(s,a)\big] \\
+    &= \propto \big[{\scalebox{0.85}{$\sum_{s}$}}d^{\pi}(s) {\scalebox{0.85}{$\sum_{a}$}} \pi_{\theta}(a|s) \nabla_{\theta}Q^{\pi}(s,a)\ln \pi_{\theta}(a|s) \big] \\
+    &= \mathbb{E}_{s \sim d^{\pi},a \sim\pi_{\theta}} [Q^{\pi}(s,a)\nabla_{\theta} \ln \pi_{\theta}(a|s)]
+  \end{align*}
+
+  Il faut maintenant revenir à la machine qui nous permettra d'obtenir $A_t^i, S_t^i, R_t^i$:
+
+  \begin{align*}
+    \nabla_\theta J(\theta) &= \mathbb{E}_{s \sim d^{\pi},a \sim\pi_{\theta}} [Q^{\pi}(s,a)\nabla_{\theta} \ln \pi_{\theta}(a|s)] \\
+    &= \mathbb{E}_{s \sim d^{\pi},a \sim\pi_{\theta}} [G_t^i \nabla_{\theta} \ln \pi_{\theta}(A^i_t|S^i_t)]
+  \end{align*}
+
+  On cherche à augmenter $J(\theta)$ d'où la monté de gradient, d'où des modifications sur les paramètres selon le gradients, il ne faut pas oublier de recoefficienter le tout en fonction de la temporalité avec $\gamma^t$:
+  \[ \theta \leftarrow \theta + \alpha \gamma^t G^i_t \nabla_\theta \ln \pi_\theta(A^i_t \vert S^i_t) \]
 
   \hyperlink{policyintroduction}{Retour}
-  
-  klbuerbqhvhjbyerukbvhjqkjbrey
 \end{frame}
+
+
 \end{document}
 

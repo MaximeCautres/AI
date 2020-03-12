@@ -4,13 +4,14 @@ import numpy as np
 
 visual_effect = True
 knuth = 10 ** 6
-unit = 48
+unit = 64
 
 
 class Mdp:
 
     def __init__(self, maps, actions, transitions, rewards, begend, alpha, delta, gamma):
 
+        self.maps = maps
         self.s_count = transitions.shape[0]
         self.a_count = actions.shape[1]
         self.dim = maps.shape
@@ -27,23 +28,25 @@ class Mdp:
         self.current = None
         self.t = 0
 
+        self.visual()
+
+
+    def visual(self):
         if visual_effect:
-            print("cou")
             self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit, background='black')
             self.canvas.pack(side=LEFT, padx=1, pady=1)
-
-            self.maps = maps
+        
             self.grid = np.array([[self.canvas.create_rectangle(unit*x, unit*y, unit*(x+1), unit*(y+1), fill=self.get_color(y, x))
                                    for x in range(self.dim[1])] for y in range(self.dim[0])])
-
-            self.change_color(self.grid[self.state_to_coord(state)], 'blue')
-
-            self.canvas.bind('<MouseWheel>', self.make_a_step)
-            self.canvas.bind('<Button-3>', self.re_spawn)
+        
+            self.change_color(self.grid[self.state_to_coord(self.start)], 'blue')
+        
+            self.canvas.bind('<Button-1>', self.make_a_step)
+            self.canvas.bind('<Enter>', self.re_spawn)
         else:
             self.life_time, self.scores = None, None
             self.reset()
-
+            
     def expected(self, vs, s, a):
         return np.sum(np.multiply(self.world['transitions'][s, a], vs[s, a]))
 
@@ -138,31 +141,28 @@ def generate_mouse_world(height, width, p):
 
     return maps, actions, transitions, rewards, (begin, goal)
 
-
-if visual_effect:
-    window = Tk()
-    window.title('I like trains !')
-else:
-    window = None
+window = Tk()
+window.title('I like train !')
 
 my_mdp = Mdp(*generate_mouse_world(16, 16, 0.2), 0.9, 6, 0.8)
 
-if window:
-    print("coucou")
-    window.mainloop()
-else:
+if not visual_effect:
     parameters = [1, 2, 4, 8, 16, 32]
     colors = ['b', 'g', 'r', 'c', 'm', 'y']
     graph = []
     for parameter in parameters:
+        my_mdp.reset()
         my_mdp.delta = parameter
-        for _ in range(312):
+        for _ in range(512):
             my_mdp.make_a_life()
         graph.append(my_mdp.scores)
-        my_mdp.reset()
     for l in range(6):
         plt.plot(graph[l], color=colors[l])
     plt.legend(parameters)
     plt.ylabel("Life time")
     plt.xlabel("Iteration")
     plt.show()
+
+visual_effect = True
+my_mdp.visual()
+window.mainloop()
