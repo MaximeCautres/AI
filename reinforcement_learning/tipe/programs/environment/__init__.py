@@ -86,13 +86,12 @@ def get_spawn(areas, n, w, h):
 
 class Simulation:
 
-    def __init__(self, dims, color_map, actions, life_time, unit):
+    def __init__(self, dims, color_map, actions, life_time):
 
         self.dims = dims
         self.color_map = color_map
         self.actions = actions
         self.life_time = life_time
-        self.unit = unit
 
         self.igc, self.obs, self.goal, self.pos, self.vel, self.bg = (None, ) * 6
 
@@ -281,14 +280,13 @@ class Simulation:
 
         return pygame.transform.scale(surface, size)
 
-    def play(self, parameters, count):
+    def play(self, parameters, unit, count):
 
         w, h, d = self.dims
-        u = self.unit
         self.igc = 1
 
         pygame.init()
-        img_size = (w * u, h * u)
+        img_size = (w * unit, h * unit)
         screen = pygame.display.set_mode(img_size)
 
         for _ in range(count):

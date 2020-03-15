@@ -1,13 +1,12 @@
 import numpy as np
 
 
-def initialize_parameters(parameters, dnn_topology):
+def initialize_parameters(parameters):
     """
     Create the parameters we need to train
 
     Take :
     parameters -- dictionary containing the whole network
-    dnn_topology -- tuple the number of neurons on each layer
 
     Notation :
     - L: number of layer in the CNN
@@ -41,7 +40,7 @@ def initialize_parameters(parameters, dnn_topology):
             current[:2] = [len(pr_x), len(pr_y)]
 
     parameters['idf'] = tuple(current)
-    parameters['Ld'] = len(dnn_topology)
+    dnn_topology = parameters['tod']
     for l in range(1, parameters['Ld']):
         cond = l < parameters['Ld'] - 1
         parameters['afd' + str(l)] = 'relu' * cond + 'softmax' * (not cond)

@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 from tkinter import *
 import numpy as np
 
-visual_effect = True
+training = True
 knuth = 10 ** 6
-unit = 64
+unit = 32
 
 
 class Mdp:
 
-    def __init__(self, maps, actions, transitions, rewards, begend, alpha, delta, gamma):
+    def __init__(self, maps, actions, transitions, rewards, begend, alpha=0.9, delta=6, gamma=0.8):
 
         self.maps = maps
         self.s_count = transitions.shape[0]
@@ -25,28 +25,28 @@ class Mdp:
 
         self.agent = {'state': state, 'values': values}
         self.world = {'actions': actions, 'transitions': transitions, 'rewards': rewards}
-        self.current = None
+        self.current, self.life_time, self.scores = (None, ) * 3
         self.t = 0
 
+        self.canvas, self.grid = (None, ) * 2
         self.visual()
 
-
     def visual(self):
-        if visual_effect:
-            self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit, background='black')
+        if training:
+            self.reset()
+        else:
+            self.canvas = Canvas(window, width=self.dim[1]*unit, height=self.dim[0]*unit)
             self.canvas.pack(side=LEFT, padx=1, pady=1)
         
-            self.grid = np.array([[self.canvas.create_rectangle(unit*x, unit*y, unit*(x+1), unit*(y+1), fill=self.get_color(y, x))
+            self.grid = np.array([[self.canvas.create_rectangle(unit*x, unit*y, unit*(x+1), unit*(y+1),
+                                                                outline='white', fill=self.get_color(y, x))
                                    for x in range(self.dim[1])] for y in range(self.dim[0])])
         
             self.change_color(self.grid[self.state_to_coord(self.start)], 'blue')
         
-            self.canvas.bind('<Button-1>', self.make_a_step)
-            self.canvas.bind('<Enter>', self.re_spawn)
-        else:
-            self.life_time, self.scores = None, None
-            self.reset()
-            
+            self.canvas.bind('<MouseWheel>', self.make_a_step)
+            self.canvas.bind('<Button-3>', self.re_spawn)
+
     def expected(self, vs, s, a):
         return np.sum(np.multiply(self.world['transitions'][s, a], vs[s, a]))
 
@@ -75,7 +75,7 @@ class Mdp:
         self.agent['values'][state, action, state_prime] += self.alpha * new
         self.agent['state'] = state_prime
 
-        if visual_effect:
+        if not training:
             self.update_color(state, state_prime)
 
     def make_a_life(self):
@@ -94,7 +94,7 @@ class Mdp:
         self.scores = []
 
     def re_spawn(self, event=None):
-        if visual_effect:
+        if not training:
             self.update_color(self.agent['state'], self.start)
         self.agent['state'] = self.start
 
@@ -102,7 +102,7 @@ class Mdp:
         return s // self.dim[1], s % self.dim[1]
 
     def get_color(self, y, x):
-        return 'white' * self.maps[y, x] + 'black' * (not self.maps[y, x])
+        return 'black' * self.maps[y, x] + 'white' * (not self.maps[y, x])
 
     def change_color(self, tag, nc):
         self.canvas.itemconfigure(tag, fill=nc)
@@ -120,7 +120,8 @@ def generate_mouse_world(height, width, p):
     begin = w + 1
     goal = (h - 2, w - 2)
 
-    maps = np.array([[not (np.random.random() < p or i == 0 or i == w - 1 or j == 0 or j == h - 1)
+    maps = np.array([[not (np.random.random() < p or i == 0 or i == w-1 or j == 0 or j == h-1)
+                      or (0 < i < 4 and 0 < j < 4) or (w-5 < i < w-1 and h-5 < j < h-1)
                       for i in range(w)] for j in range(h)])
     actions_set = [(0, 1), (-1, 0), (0, -1), (1, 0)]
 
@@ -141,28 +142,39 @@ def generate_mouse_world(height, width, p):
 
     return maps, actions, transitions, rewards, (begin, goal)
 
-window = Tk()
-window.title('I like train !')
 
-my_mdp = Mdp(*generate_mouse_world(16, 16, 0.2), 0.9, 6, 0.8)
+agent_trained = None
+world = generate_mouse_world(32, 48, 0.2)
 
-if not visual_effect:
-    parameters = [1, 2, 4, 8, 16, 32]
+if training:
+    mdp_train = Mdp(*world)
+    # parameters = [1, 2, 4, 8, 16, 32]
+    parameters = [6]
+    n = len(parameters)
     colors = ['b', 'g', 'r', 'c', 'm', 'y']
     graph = []
     for parameter in parameters:
-        my_mdp.reset()
-        my_mdp.delta = parameter
-        for _ in range(512):
-            my_mdp.make_a_life()
-        graph.append(my_mdp.scores)
-    for l in range(6):
+        mdp_train.reset()
+        mdp_train.delta = parameter
+        for _ in range(2560):
+            mdp_train.make_a_life()
+        graph.append(mdp_train.scores)
+    for l in range(n):
         plt.plot(graph[l], color=colors[l])
     plt.legend(parameters)
     plt.ylabel("Life time")
     plt.xlabel("Iteration")
     plt.show()
 
-visual_effect = True
-my_mdp.visual()
+    agent_trained = mdp_train.agent.copy()
+    training = False
+
+window = Tk()
+window.title('I like train !')
+
+my_mdp = Mdp(*world)
+
+if agent_trained:
+    my_mdp.agent = agent_trained
+
 window.mainloop()
