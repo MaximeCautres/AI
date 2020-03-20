@@ -15,6 +15,10 @@ def show_stats(stats, t):
 
 
 def collide(areas, p):
+    """
+    areas -- (4, p + q, n)
+    p -- (2, n)
+    """
     return np.sum((areas[0] <= p[0]) * (p[0] <= areas[2]) * (areas[1] <= p[1]) * (p[1] <= areas[3]), axis=0)
 
 
@@ -99,7 +103,7 @@ class Simulation:
 
         _, p, _ = self.obs.shape
         _, q, _ = self.goal.shape
-        img = np.zeros(self.dims + (self.igc,))
+        img = np.zeros(self.dims + (1, self.igc))
 
         for k in range(self.igc):
 
@@ -132,7 +136,7 @@ class Simulation:
 
     def in_screen(self, p):
 
-        w, h, _ = self.dims
+        w, h = self.dims
         borders = np.array([0, 0, w - 1, h - 1])
 
         return collide(borders, p)
@@ -178,7 +182,7 @@ class Simulation:
         - log -- (t, w, h, 2*d, igc)
         """
 
-        w, h, d = self.dims
+        w, h = self.dims
         self.igc = n
         self.obs, self.goal, self.pos, self.vel = get_map(n, w, h)
         self.bg = self.get_bg()
@@ -186,7 +190,7 @@ class Simulation:
         life = 0
 
         init = self.get_img(self.bg.copy())
-        log_img = np.concatenate((init, init), axis=2).reshape(1, w, h, 2*d, n)
+        log_img = np.concatenate((init, init), axis=2).reshape(1, w, h, 2, n)
         log_act = None
         features = []
         gradients = []
@@ -222,9 +226,9 @@ class Simulation:
             self.vel = new_pos[..., in_game] - self.pos[..., in_game]
             self.pos = new_pos[..., in_game]
             current = self.get_img(self.bg[..., in_game].copy())
-            previous = np.moveaxis(log_img[-1, ..., d:, in_game], 0, -1)
+            previous = np.moveaxis(log_img[-1, ..., 1:, in_game], 0, -1)
 
-            new_img = np.concatenate((previous, current), axis=2).reshape(1, w, h, 2 * d, self.igc)
+            new_img = np.concatenate((previous, current), axis=2).reshape(1, w, h, 2, self.igc)
             log_img = np.concatenate((log_img[..., in_game], new_img), axis=0)
             log_act = log_act[:, in_game]
 
@@ -265,7 +269,7 @@ class Simulation:
         surface = pygame.surfarray.make_surface(array)
 
         new_pos = self.pos + self.vel
-        ac = self.actions.shape[0]
+        ac = len(distribution)
 
         red = min(distribution)
         green = max(distribution)
@@ -282,7 +286,7 @@ class Simulation:
 
     def play(self, parameters, unit, count):
 
-        w, h, d = self.dims
+        w, h = self.dims
         self.igc = 1
 
         pygame.init()

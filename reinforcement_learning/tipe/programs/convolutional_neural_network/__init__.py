@@ -103,12 +103,21 @@ def forward(parameters, X, return_cache=False):
 
 
 def backward(parameters, X, da):
+    """
+    Back-propagate the whole network
+
+    Take :
+    parameters -- dictionary containing the whole network
+    X -- input image (w_X, h_X, d, n)
+    da -- gradients of the output on the advantage function
+
+    Return :
+    gradients -- dictionary containing all the gradients of the network
+    """
+
     gradients = {}
     n = X.shape[3]
     cache = forward(parameters, X, True)
-
-    # y_hat = cache['a' + str(parameters['Ld'] - 1)]
-    # da = np.divide(1 - y, 1 - y_hat) - np.divide(y, y_hat)
 
     dz = None
 
@@ -119,7 +128,6 @@ def backward(parameters, X, da):
         if af == 'relu':
             dz = da * relu_prime(z)
         elif af == 'softmax':
-            # dz = y_hat - y
             dz = da * softmax_prime(z)
 
         a_p = cache['a' + str(l - 1)]
@@ -150,12 +158,26 @@ def backward(parameters, X, da):
 
 
 def update_parameters(parameters, gradients, alpha):
-    for l in range(1, parameters['Lc']):  # here we gradient ascend so we use + instead of -
+    """
+    Update parameters with gradient ascend
+
+    Take :
+    parameters -- dictionary containing the whole network
+    gradients -- dictionary containing all the gradients of the network
+    alpha -- learning rate
+
+    Return :
+    parameters -- dictionary containing the whole network
+    """
+
+    for l in range(1, parameters['Lc']):
         if parameters['lt' + str(l)] == 'c':
             parameters['K' + str(l)] += alpha * gradients['dK' + str(l)]
+
     for l in range(1, parameters['Ld']):
         parameters['w' + str(l)] += alpha * gradients['dw' + str(l)]
         parameters['b' + str(l)] += alpha * gradients['db' + str(l)]
+
     return parameters
 
 
