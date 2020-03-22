@@ -2,7 +2,7 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_5'
+file_name = 'parameters_0'
 import_file = True
 begin_with = False
 
@@ -26,5 +26,5 @@ else:
                       'Ld': 3, 'tod': (13 * 13 * 4, 64, len(actions))}
         parameters = initialize_parameters(parameters)
 
-    parameters = environment.train(parameters, 10**-4, 0.9, 128, 1024, 16)
+    parameters = environment.train(parameters, 10**-4, 128, 2048, 8)
     pickle.dump(parameters, open(file_name, 'wb'))

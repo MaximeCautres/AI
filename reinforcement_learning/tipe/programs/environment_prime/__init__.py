@@ -92,7 +92,7 @@ class Environment:
 
         return np.concatenate((previous, current), axis=2)
 
-    def train(self, parameters, alpha, gamma, batch_size, epoch_count, print_length):
+    def train(self, parameters, alpha, batch_size, epoch_count, print_length):
 
         games = [Game(self) for _ in range(batch_size)]
 
@@ -115,10 +115,10 @@ class Environment:
                             flag = True
 
             win_count = 0
-            features, gradients = [], []
+            features, labels = [], []
             for game in games:
-                f, g = game.get_results(gamma)
-                features += f ; gradients += g
+                f, l = game.get_results()
+                features += f ; labels += l
                 life_acc += game.life
                 if game.state == 'win':
                     win_count += 1
@@ -126,7 +126,7 @@ class Environment:
             parameters = update_parameters(parameters,
                                            backward(parameters,
                                                     np.stack(features, axis=3),
-                                                    np.stack(gradients, axis=1)),
+                                                    np.stack(labels, axis=1)),
                                            alpha)
 
             win_rates.append(win_count / batch_size)
@@ -183,8 +183,8 @@ class Game:
 
             img = self.mother.generate_img(self.pos, self.prev)
             prob = forward(parameters, img.reshape(img.shape + (1, ))).reshape(-1)
-            a = np.random.choice(len(actions), p=prob) ; m = prob[a]
-            # a = np.argmax(prob) ; m = np.max(prob)
+            # a = np.random.choice(len(actions), p=prob) ; m = prob[a]
+            a = np.argmax(prob) ; m = np.max(prob)
             act = actions[a]
 
             self.prev = self.pos.copy()
@@ -202,19 +202,26 @@ class Game:
         else:
             self.state = 'draw'
 
-    def get_results(self, gamma):
+    def get_results(self):
 
+        if self.state == 'draw':
+            return [], []
+
+        ac = len(self.mother.actions)
         length = self.life
-        gradients = []
-        action_count = len(self.mother.actions)
-        epsilon = (self.state == 'win') - (self.state == 'lost')
+        labels = []
+        epsilon = int(self.state == 'win')
+
+        if epsilon:
+            bg = np.zeros(ac)
+        else:
+            bg = np.full(ac, 1 / (ac - 1))
 
         for t in range(length):
 
-            a, m = self.log_act[t]
-            gain = epsilon * (1 - gamma ** (length - t)) / (1 - gamma)
-            grad = np.zeros(action_count)
-            grad[a] = -np.log(m) * gain
-            gradients.append(grad)
+            a, _ = self.log_act[t]
+            lab = bg.copy()
+            lab[a] = epsilon
+            labels.append(lab)
 
-        return self.log_img, gradients
+        return self.log_img, labels

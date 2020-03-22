@@ -314,8 +314,8 @@ class Simulation:
                     if event.type == pygame.MOUSEBUTTONDOWN:
 
                         life += 1
-                        a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
-                        # a = np.argmax(prob, axis=0)
+                        # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
+                        a = np.argmax(prob, axis=0)
                         action = self.actions[a].T.reshape(2, 1, 1)
 
                         new_pos = self.pos + self.vel + action
