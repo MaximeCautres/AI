@@ -23,7 +23,7 @@ def collide(areas, point):
                   * (areas[1] <= point[1]) * (point[1] <= areas[3]))
 
 
-def generate_map(w, h, obs_count=2, goal_count=1):
+def get_map():
     """
     [x-, y-, x+, y+]
     obs -- (4, obs_count)
@@ -52,7 +52,7 @@ class Environment:
         self.actions = actions
         self.life_time = life_time
 
-        self.obs, self.goal = generate_map(*dims)
+        self.obs, self.goal = get_map()
         self.background = self.initialize_bg()
 
     def initialize_bg(self):
@@ -84,7 +84,7 @@ class Environment:
 
         return point
 
-    def generate_img(self, curr, prev):
+    def generate_img(self, prev, curr):
 
         px, py = prev; cx, cy = curr
         previous, current = self.background.copy(), self.background.copy()
@@ -92,7 +92,34 @@ class Environment:
 
         return np.concatenate((previous, current), axis=2)
 
-    def train(self, parameters, alpha, batch_size, epoch_count, print_length):
+    def generate_frame(self, pos, vel, distribution, size):
+
+        array = np.squeeze(self.background.copy())
+
+        if self.in_screen(pos):
+            x, y = pos
+            array[x, y] = self.color_map['self']
+
+        surface = pygame.surfarray.make_surface(array * 255)
+
+        new_pos = pos + vel
+        ac = len(distribution)
+        red = min(distribution)
+        green = max(distribution)
+        delta = green - red
+
+        for k in range(ac):
+            p = new_pos + self.actions[k]
+            if self.in_screen(p):
+                z = distribution[k]
+                color = pygame.Color(int(255 * (green - z) / delta),
+                                     int(255 * (z - red) / delta),
+                                     0)
+                surface.set_at(tuple(p), color)
+
+        return pygame.transform.scale(surface, size)
+
+    def train(self, parameters, alpha, gamma, batch_size, epoch_count, print_length):
 
         games = [Game(self) for _ in range(batch_size)]
 
@@ -103,7 +130,7 @@ class Environment:
         for epoch in range(epoch_count):
 
             for game in games:
-                game.reset()
+                game.reset(parameters)
 
             flag = True
             while flag:
@@ -117,17 +144,18 @@ class Environment:
             win_count = 0
             features, labels = [], []
             for game in games:
-                f, l = game.get_results()
+                f, l = game.get_data_set()
                 features += f ; labels += l
                 life_acc += game.life
                 if game.state == 'win':
                     win_count += 1
 
-            parameters = update_parameters(parameters,
-                                           backward(parameters,
-                                                    np.stack(features, axis=3),
-                                                    np.stack(labels, axis=1)),
-                                           alpha)
+            if 0 < len(features) + len(labels):
+                parameters = update_parameters(parameters,
+                                               backward(parameters,
+                                                        np.stack(features, axis=3),
+                                                        np.stack(labels, axis=1)),
+                                               alpha)
 
             win_rates.append(win_count / batch_size)
 
@@ -150,7 +178,30 @@ class Environment:
 
     def play(self, parameters, count, unit):
 
-        pass
+        game = Game(self)
+
+        pygame.init()
+        img_size = (self.w * unit, self.h * unit)
+        screen = pygame.display.set_mode(img_size)
+
+        for _ in range(count):
+
+            game.reset(parameters)
+            frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
+
+            while game.state == 'play':
+
+                screen.blit(frame, (0, 0))
+
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+
+                        game.update(parameters)
+                        frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
+
+                pygame.display.flip()
+            print(game.state)
+        pygame.quit()
 
 
 class Game:
@@ -164,7 +215,18 @@ class Game:
         self.log_img, self.log_act = (None, ) * 2
         self.life = None
 
-    def reset(self):
+    def uplog(self, parameters):
+
+        img = self.mother.generate_img(self.prev, self.pos)
+        prob = np.squeeze(forward(parameters, img.reshape(img.shape + (1,))))
+
+        # a = np.random.choice(len(self.mother.actions), p=prob)
+        a = np.argmax(prob)
+
+        self.log_img.append(img)
+        self.log_act.append((a, prob))
+
+    def reset(self, parameters):
 
         self.state = 'play'
         self.pos = self.mother.generate_pos()
@@ -172,6 +234,8 @@ class Game:
         self.vel = np.zeros(2, dtype=int)
         self.log_img, self.log_act = [], []
         self.life = 0
+
+        self.uplog(parameters)
 
     def update(self, parameters):
 
@@ -181,28 +245,21 @@ class Game:
 
             self.life += 1
 
-            img = self.mother.generate_img(self.pos, self.prev)
-            prob = forward(parameters, img.reshape(img.shape + (1, ))).reshape(-1)
-            # a = np.random.choice(len(actions), p=prob) ; m = prob[a]
-            a = np.argmax(prob) ; m = np.max(prob)
-            act = actions[a]
-
             self.prev = self.pos.copy()
-            self.vel += act
+            self.vel += actions[self.log_act[-1][0]]
             self.pos += self.vel
 
             if collide(self.mother.obs, self.pos) or not self.mother.in_screen(self.pos):
                 self.state = 'lost'
             elif collide(self.mother.goal, self.pos):
                 self.state = 'win'
-
-            self.log_img.append(img)
-            self.log_act.append((a, m))
+            else:
+                self.uplog(parameters)
 
         else:
             self.state = 'draw'
 
-    def get_results(self):
+    def get_data_set(self):
 
         if self.state == 'draw':
             return [], []
@@ -225,3 +282,23 @@ class Game:
             labels.append(lab)
 
         return self.log_img, labels
+
+    def get_gradients(self, gamma):
+
+        if self.state == 'draw':
+            return [], []
+
+        length = self.life
+        gradients = []
+        action_count = len(self.mother.actions)
+        epsilon = (self.state == 'win') - (self.state == 'lost')
+
+        for t in range(length):
+            a, prob = self.log_act[t]
+            m = prob[a]
+            gain = epsilon * (1 - gamma ** (length - t)) / (1 - gamma)
+            grad = np.zeros(action_count)
+            grad[a] = (gamma ** t) * (gain / m)
+            gradients.append(grad)
+
+        return self.log_img, gradients

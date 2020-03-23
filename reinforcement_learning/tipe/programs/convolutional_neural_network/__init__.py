@@ -133,6 +133,7 @@ def backward(parameters, X, y):
             dz = da * relu_prime(z)
         elif af == 'softmax':
             dz = y_hat - y
+            # dz = softmax_prime(z)
 
         a_p = cache['a' + str(l - 1)]
         w = parameters['w' + str(l)]

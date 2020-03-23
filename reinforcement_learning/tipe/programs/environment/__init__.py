@@ -274,13 +274,16 @@ class Simulation:
         red = min(distribution)
         green = max(distribution)
         delta = green - red
-        map_color = lambda z: pygame.Color(int(255 * (green - z) / delta), int(255 * (z - red) / delta), 0)
 
         for k in range(ac):
             p = new_pos + self.actions[k].reshape(2, 1, 1)
             if self.in_screen(p):
                 x, y = p.reshape(-1)
-                surface.set_at((x, y), map_color(distribution[k]))
+                z = distribution[k]
+                color = pygame.Color(int(255 * (green - z) / delta),
+                                     int(255 * (z - red) / delta),
+                                     0)
+                surface.set_at((x, y), color)
 
         return pygame.transform.scale(surface, size)
 
