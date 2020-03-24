@@ -9,8 +9,8 @@ import convolutional_neural_network as cnn
 
 save_name = ''
 save_type = 'test'
-data_set_name = 'cifar_100_coarse'
-count = 20
+data_set_name = 'cifar_15'
+count = 15
 inputs_dimensions = (32, 32, 3)
 
 cnn_topology = {'Lc': 2,
@@ -34,8 +34,8 @@ gamma = '0.9'
 rho = '0.9'
 lambda2C = 0.01
 lambda2D = 0.1
-training_count = 50000
-testing_count = 5000
+training_count = 15000
+testing_count = 1500
 
 data = pickle.load(open(data_set_name, 'rb'))
 training = (data['train_x'][:, :, :, :training_count], data['train_y'][:, :training_count])

@@ -21,19 +21,27 @@ def initialize_parameters(parameters):
     parameters -- dictionary containing the whole network
     """
 
+    k = 10 ** -1
     current = list(parameters['idi'])
+
     for l in range(1, parameters['Lc']):
+
         if parameters['lt' + str(l)] == 'c':
+
             w, h, k_d = current
             k_w, k_h, k_c = parameters['kd' + str(l)]
-            parameters['K' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1) * (10 ** -1)
+
+            parameters['K' + str(l)] = np.random.randn(k_w, k_h, k_d, k_c, 1) * k
             current = [w + k_w - 1, h + k_h - 1, k_c]
+
         else:
+
             s_x, s_y = parameters['ss' + str(l)]
             p_w, p_h = parameters['pd' + str(l)]
             w, h = current[:2]
             pr_x = [x for x in range(w) if not (x % s_x) and x + p_w <= w or x + p_w == w]
             pr_y = [y for y in range(h) if not (y % s_y) and y + p_h <= h or y + p_h == h]
+
             parameters['afc' + str(l)] = 'elu'
             parameters['pf' + str(l)] = 'max'
             parameters['pr' + str(l)] = (pr_x, pr_y)
@@ -41,10 +49,12 @@ def initialize_parameters(parameters):
 
     parameters['idf'] = tuple(current)
     dnn_topology = parameters['tod']
+
     for l in range(1, parameters['Ld']):
+
         cond = l < parameters['Ld'] - 1
         parameters['afd' + str(l)] = 'relu' * cond + 'softmax' * (not cond)
-        parameters['w' + str(l)] = np.random.randn(*dnn_topology[l - 1:l + 1][::-1]) * (10 ** -1)
+        parameters['w' + str(l)] = np.random.randn(*dnn_topology[l - 1:l + 1][::-1]) * k
         parameters['b' + str(l)] = np.zeros((dnn_topology[l], 1))
 
     return parameters
@@ -102,7 +112,7 @@ def forward(parameters, X, return_cache=False):
         return a
 
 
-def backward(parameters, X, y):
+def backward(parameters, X, da):
     """
     Back-propagate the whole network
 
@@ -120,9 +130,6 @@ def backward(parameters, X, y):
     gradients = {}
     n = X.shape[3]
     cache = forward(parameters, X, True)
-
-    y_hat = cache['a' + str(parameters['Ld'] - 1)]
-    da = np.divide(1 - y, 1 - y_hat) - np.divide(y, y_hat)
     dz = None
 
     for l in reversed(range(1, parameters['Ld'])):
@@ -132,8 +139,7 @@ def backward(parameters, X, y):
         if af == 'relu':
             dz = da * relu_prime(z)
         elif af == 'softmax':
-            dz = y_hat - y
-            # dz = softmax_prime(z)
+            dz = da * softmax_prime(z)
 
         a_p = cache['a' + str(l - 1)]
         w = parameters['w' + str(l)]
@@ -157,14 +163,13 @@ def backward(parameters, X, y):
             pr, pd = parameters['pr' + str(l)], parameters['pd' + str(l)]
             pf, af = parameters['pf' + str(l)], parameters['afc' + str(l)]
             dA = depool(dA, Y_p, I, pr, pd, pf, af)
-            gradients['dA' + str(l)] = dA
 
     return gradients
 
 
 def update_parameters(parameters, gradients, alpha):
     """
-    Update parameters with gradient descend
+    Update parameters with gradient ascend
 
     Take :
     parameters -- dictionary containing the whole network
@@ -177,11 +182,11 @@ def update_parameters(parameters, gradients, alpha):
 
     for l in range(1, parameters['Lc']):
         if parameters['lt' + str(l)] == 'c':
-            parameters['K' + str(l)] -= alpha * gradients['dK' + str(l)]
+            parameters['K' + str(l)] += alpha * gradients['dK' + str(l)]
 
     for l in range(1, parameters['Ld']):
-        parameters['w' + str(l)] -= alpha * gradients['dw' + str(l)]
-        parameters['b' + str(l)] -= alpha * gradients['db' + str(l)]
+        parameters['w' + str(l)] += alpha * gradients['dw' + str(l)]
+        parameters['b' + str(l)] += alpha * gradients['db' + str(l)]
 
     return parameters
 

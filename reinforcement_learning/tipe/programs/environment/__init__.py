@@ -1,7 +1,6 @@
 import time
 import pygame
 import matplotlib.pyplot as plt
-from random import randrange
 from convolutional_neural_network import *
 
 
@@ -14,328 +13,302 @@ def show_stats(stats, t):
     plt.show()
 
 
-def collide(areas, p):
+def normalize(array):
+
+    return (array - np.mean(array, axis=0, keepdims=True)) \
+           / np.std(array, axis=0, keepdims=True)
+
+
+def collide(areas, point):
     """
-    areas -- (4, p + q, n)
-    p -- (2, n)
+    areas -- (4, obs_count + goal_count)
+    point -- (2)
     """
-    return np.sum((areas[0] <= p[0]) * (p[0] <= areas[2]) * (areas[1] <= p[1]) * (p[1] <= areas[3]), axis=0)
+
+    return np.sum((areas[0] <= point[0]) * (point[0] <= areas[2])
+                  * (areas[1] <= point[1]) * (point[1] <= areas[3]))
 
 
-"""
-def get_map(n, w, h, p=6, q=1):
-    
-    [x-, y-, x+, y+]
-    obs -- (4, p, n)
-    goal -- (4, q, n)
-    pos -- (2, 1, n)
-    vel -- (2, 1, n)
-    
-    obs_brut = np.array([[4, 5, 6, 19], [18, 5, 20, 19]], dtype=int)
-    #obs_brut = np.array([[0, 16, 13, 19], [23, 14, 39, 17], [0, 0, 18, 3], [26, 0, 39, 3], [0, 30, 14, 33], [27, 27, 30, 39]], dtype=int)
-    obs = np.broadcast_to(obs_brut.T.reshape(4, p, 1), (4, p, n))
-
-    possible_goal = [[0, 34, 4, 38], [31, 35, 35, 39], [35, 18, 39, 22], [4, 25, 8, 29], [0, 4, 4, 8], [27, 9, 31, 13]]
-    goal_brut = np.array([[possible_goal[randrange(0, len(possible_goal))] for _ in range(n)]], dtype=int)
-    goal_brut =
-    goal = goal_brut.T.reshape(4, q, n)
-
-    pos = get_spawn(np.concatenate((obs, goal), axis=1), n, w, h)
-    vel = np.zeros((2, 1, 1), dtype=int)
-
-    return obs, goal, pos, vel"""
-
-
-def get_map(n, w, h, p=2, q=1):
+def get_map():
     """
     [x-, y-, x+, y+]
-    obs -- (4, p, n)
-    goal -- (4, q, n)
-    pos -- (2, 1, n)
-    vel -- (2, 1, n)
+    obs -- (4, obs_count)
+    goal -- (4, goal_count)
     """
 
-    obs_brut = np.array([[4, 5, 6, 19], [18, 5, 20, 19]], dtype=int)
-    obs = np.broadcast_to(obs_brut.T.reshape(4, p, 1), (4, p, n))
+    obs = np.array([[4, 18],
+                    [5, 5],
+                    [6, 20],
+                    [19, 19]], dtype=int)
 
-    goal_brut = np.array([[[10, 10, 14, 14]]], dtype=int)
-    goal = np.broadcast_to(goal_brut.T.reshape(4, q, 1), (4, q, n))
+    goal = np.array([[10],
+                    [10],
+                    [14],
+                    [14]], dtype=int)
 
-    pos = get_spawn(np.concatenate((obs, goal), axis=1), n, w, h)
-    vel = np.zeros((2, 1, 1), dtype=int)
-
-    return obs, goal, pos, vel
-
-
-def get_spawn(areas, n, w, h):
-    """
-    areas -- (4, p + q, n)
-    """
-
-    len_l_c = n
-    l_c = list(range(n))
-    l_s = np.zeros((2, 1, n), dtype=int)
-
-    while len_l_c:
-
-        x = np.random.randint(w, size=len_l_c)
-        y = np.random.randint(h, size=len_l_c)
-        l_s[:, 0, l_c] = np.array([x, y])
-        table = collide(areas[..., l_c], l_s[..., l_c])
-        l_c = [l_c[k] for k in range(len_l_c) if table[k]]
-        len_l_c = len(l_c)
-
-    return l_s
+    return obs, goal
 
 
-class Simulation:
+class Environment:
 
     def __init__(self, dims, color_map, actions, life_time):
 
-        self.dims = dims
+        self.w, self.h = dims
         self.color_map = color_map
         self.actions = actions
         self.life_time = life_time
 
-        self.igc, self.obs, self.goal, self.pos, self.vel, self.bg = (None, ) * 6
+        self.obs, self.goal = get_map()
+        self.background = self.initialize_bg()
+        self.exploration_rate = None
 
-    def get_bg(self):
+    def initialize_bg(self):
 
-        _, p, _ = self.obs.shape
-        _, q, _ = self.goal.shape
-        img = np.zeros(self.dims + (1, self.igc))
+        img = np.zeros((self.w, self.h, 1))
 
-        for k in range(self.igc):
+        for x1, y1, x2, y2 in self.obs.T:
+            img[x1:x2 + 1, y1:y2 + 1] = self.color_map['obst']
 
-            for j in range(p):
-                x1, y1, x2, y2 = self.obs[:, j, k]
-                img[x1:x2+1, y1:y2+1, :, k] = self.color_map['obst']
-
-            for j in range(q):
-                x1, y1, x2, y2 = self.goal[:, j, k]
-                img[x1:x2+1, y1:y2+1, :, k] = self.color_map['goal']
+        for x1, y1, x2, y2 in self.goal.T:
+            img[x1:x2 + 1, y1:y2 + 1] = self.color_map['goal']
 
         return img
 
-    def get_img(self, bg):
+    def in_screen(self, point):
 
-        x, y = self.pos
-        bg[x, y, :, range(self.igc)] = self.color_map['self']
+        borders = np.array([0, 0, self.w-1, self.h-1])
 
-        return bg
+        return collide(borders, point)
 
-    def get_result(self, p):
+    def generate_pos(self):
 
-        win_table = collide(self.goal, p)
-        loose_table = collide(self.obs, p) + (True - self.in_screen(p))
+        areas = np.append(self.obs, self.goal, axis=1)
+        point = None
 
-        win = [k for k in range(self.igc) if win_table[k]]
-        loose = [k for k in range(self.igc) if loose_table[k]]
+        while point is None or collide(areas, point):
 
-        return win, loose
+            point = np.array([np.random.randint(self.w), np.random.randint(self.h)])
 
-    def in_screen(self, p):
+        return point
 
-        w, h = self.dims
-        borders = np.array([0, 0, w - 1, h - 1])
+    def generate_img(self, prev, curr):
 
-        return collide(borders, p)
+        px, py = prev; cx, cy = curr
+        previous, current = self.background.copy(), self.background.copy()
+        previous[px, py], current[cx, cy] = (self.color_map['self'], ) * 2
 
-    def log_to_features(self, array_in):
-        
-        _, w, h, d, _ = array_in.shape
-        array_out = np.moveaxis(array_in, -1, 1).reshape(-1, w, h, d)
-        
-        return list(array_out)
+        return np.concatenate((previous, current), axis=2)
 
-    def log_to_gradients(self, array_in, gamma, result):
-        
-        ac = len(self.actions)
-        length, c = array_in.shape
-        epsilon = (result == 'win') - (result == 'loose')
-        gammas = (gamma ** np.flip(np.arange(length))).reshape(length, 1, 1)
+    def generate_frame(self, pos, vel, distribution, size):
 
-        t_i = np.array([[i for _ in range(c)] for i in range(length)], dtype=int)
-        c_i = np.array([[j for j in range(c)] for _ in range(length)], dtype=int)
+        array = np.squeeze(self.background.copy())
 
-        inter = np.zeros((length, c, ac))
-        inter[t_i, c_i, array_in] = 1
-        gradients = (inter * gammas).reshape(-1, ac) * epsilon 
-       
-        return list(gradients)
-    
-    def make_a_batch(self, parameters, n, gamma=1, epsilon=0.):
-        """
-        This function creates the experience batches used in the policy gradient algorithm.
-        - w, h, d -- dimension of the map's image
-        - igc -- current number of in game parties
-        - goal -- (4, q, n)
-        - pos -- (2, 1, n)
-        - vel -- (2, 1, n)
-        - bg -- background of the image (the map)
-        - log_im -- the list where in_game's data will stay until treatment
-        - log_act -- the list where in_game's actions will stay until treatment
-        - features -- the list where finished game's data are stoked
-        - labels -- the list where the label corresponding to an end are stocked
-        - life_time -- maximal number of decisions in a game
-        - life -- current number of decisions
-        - log -- (t, w, h, 2*d, igc)
-        """
+        if self.in_screen(pos):
+            x, y = pos
+            array[x, y] = self.color_map['self']
 
-        w, h = self.dims
-        self.igc = n
-        self.obs, self.goal, self.pos, self.vel = get_map(n, w, h)
-        self.bg = self.get_bg()
-        win_count = 0
-        life = 0
+        surface = pygame.surfarray.make_surface(array * 255)
 
-        init = self.get_img(self.bg.copy())
-        log_img = np.concatenate((init, init), axis=2).reshape(1, w, h, 2, n)
-        log_act = None
-        features = []
-        gradients = []
-
-        while life < self.life_time and 0 < self.igc:
-
-            life += 1
-            img = log_img[-1]
-            prob = forward(parameters, img)
-
-            # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
-            a = np.argmax(prob, axis=0)
-            action = self.actions[a].T.reshape(2, 1, self.igc)
-            # index = np.random.random(self.igc) < epsilon
-            # action[..., index] = np.random.randint(len(self.actions), size=np.count_nonzero(index))
-
-            new_act = np.array([a])
-            if log_act is not None:
-                new_act = np.concatenate((log_act, new_act), axis=0)
-            log_act = new_act
-
-            new_pos = self.pos + self.vel + action
-            win, loose = self.get_result(new_pos)
-            win_count += len(win)
-            in_game = [i for i in range(self.igc) if not (i in win or i in loose)]
-            self.igc = len(in_game)
-
-            features += self.log_to_features(log_img[..., win]) + self.log_to_features(log_img[..., loose])
-            gradients += self.log_to_gradients(log_act[:, win], gamma, 'win') + self.log_to_gradients(log_act[:, loose], gamma, 'loose')
-
-            self.obs = self.obs[..., in_game]
-            self.goal = self.goal[..., in_game]
-            self.vel = new_pos[..., in_game] - self.pos[..., in_game]
-            self.pos = new_pos[..., in_game]
-            current = self.get_img(self.bg[..., in_game].copy())
-            previous = np.moveaxis(log_img[-1, ..., 1:, in_game], 0, -1)
-
-            new_img = np.concatenate((previous, current), axis=2).reshape(1, w, h, 2, self.igc)
-            log_img = np.concatenate((log_img[..., in_game], new_img), axis=0)
-            log_act = log_act[:, in_game]
-
-        return np.moveaxis(features, 0, -1), np.moveaxis(gradients, 0, -1), win_count / n
-
-    def train(self, parameters, alpha, gamma, batch_size, epoch_count, print_length):
-
-        time_point = time.time()
-        stats = {'mean': [], 'min': [], 'max': []}
-        win_rates = []
-
-        for epoch in range(1, epoch_count + 1):
-
-            features, grad, win_rate = self.make_a_batch(parameters, batch_size, gamma)
-            if 0 < features.size + grad.size:
-                gradients = backward(parameters, features, grad)
-                parameters = update_parameters(parameters, gradients, alpha)
-            win_rates.append(win_rate)
-
-            if not epoch % print_length:
-
-                a = np.array(win_rates)
-                m = np.mean(a)
-                stats['min'].append(np.min(a))
-                stats['mean'].append(m)
-                stats['max'].append(np.max(a))
-                win_rates = []
-                print("Epoch {} : {} %".format(epoch, round(m * 100, 2)))
-
-        delta = time.gmtime(time.time() - time_point)
-        print("Finished in {0} hour(s) {1} minute(s) {2} second(s).".format(delta.tm_hour, delta.tm_min, delta.tm_sec))
-        show_stats(stats, (np.arange(epoch_count // print_length) + 1) * print_length)
-
-        return parameters
-
-    def numpy_to_pygame(self, source, size, distribution):
-        array = source.reshape(self.dims[:2]) * 255
-        surface = pygame.surfarray.make_surface(array)
-
-        new_pos = self.pos + self.vel
+        new_pos = pos + vel
         ac = len(distribution)
-
         red = min(distribution)
         green = max(distribution)
         delta = green - red
 
         for k in range(ac):
-            p = new_pos + self.actions[k].reshape(2, 1, 1)
+            p = new_pos + self.actions[k]
             if self.in_screen(p):
-                x, y = p.reshape(-1)
                 z = distribution[k]
                 color = pygame.Color(int(255 * (green - z) / delta),
                                      int(255 * (z - red) / delta),
                                      0)
-                surface.set_at((x, y), color)
+                surface.set_at(tuple(p), color)
 
         return pygame.transform.scale(surface, size)
 
-    def play(self, parameters, unit, count):
+    def train(self, parameters, alpha, batch_size, epoch_count, print_length):
 
-        w, h = self.dims
-        self.igc = 1
+        games = [Game(self) for _ in range(batch_size)]
+
+        time_begin = time.time()
+        stats = {'mean': [], 'min': [], 'max': []}
+        win_rates, life_acc = [], 0
+        self.exploration_rate = 1
+
+        for epoch in range(epoch_count):
+
+            for game in games:
+                game.reset(parameters)
+
+            flag = True
+            while flag:
+                flag = False
+                for game in games:
+                    if game.state == 'play':
+                        game.update(parameters)
+                        if game.state == 'play':
+                            flag = True
+
+            win_count = 0
+            features, gradients = [], []
+            for game in games:
+                f, g = game.get_gradients()
+                features += f ; gradients += g
+                life_acc += game.life
+                if game.state == 'win':
+                    win_count += 1
+
+            if 0 < len(features) + len(gradients):
+                parameters = update_parameters(parameters,
+                                               backward(parameters,
+                                                        np.stack(features, axis=3),
+                                                        normalize(np.stack(gradients, axis=1))),
+                                               alpha)
+
+            win_rates.append(win_count / batch_size)
+            self.exploration_rate *= 0.9
+
+            if not (epoch + 1) % print_length:
+                a = np.array(win_rates)
+                m = np.mean(a)
+                stats['min'].append(np.min(a))
+                stats['mean'].append(m)
+                stats['max'].append(np.max(a))
+                print("Epoch {} : win_rate = {} % / length_mean = {}".format(epoch + 1, round(m * 100, 2),
+                                                                             life_acc / (batch_size * print_length)))
+                win_rates, life_acc = [], 0
+
+        delta = time.gmtime(time.time() - time_begin)
+        print("Finished in {0} hour(s) {1} minute(s) {2} second(s)."
+              .format(delta.tm_hour, delta.tm_min, delta.tm_sec))
+        show_stats(stats, (np.arange(epoch_count // print_length) + 1) * print_length)
+
+        return parameters
+
+    def play(self, parameters, count, unit):
+
+        game = Game(self)
 
         pygame.init()
-        img_size = (w * unit, h * unit)
+        img_size = (self.w * unit, self.h * unit)
         screen = pygame.display.set_mode(img_size)
+        self.exploration_rate = 0
 
         for _ in range(count):
 
-            self.obs, self.goal, self.pos, self.vel = get_map(1, w, h)
-            self.bg = self.get_bg()
-            life = 0
+            game.reset(parameters)
+            frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
 
-            previous = self.get_img(self.bg.copy())
-            current = previous
-            game_state = 'in_game'
+            while game.state == 'play':
 
-            prob = forward(parameters, np.concatenate((previous, current), axis=2))
-            img = self.numpy_to_pygame(current, img_size, list(prob))
-
-            while life < self.life_time and game_state == 'in_game':
-
-                screen.blit(img, (0, 0))
+                screen.blit(frame, (0, 0))
 
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONDOWN:
 
-                        life += 1
-                        # a = [int(np.random.choice(9, 1, p=p)) for p in prob.T]
-                        a = np.argmax(prob, axis=0)
-                        action = self.actions[a].T.reshape(2, 1, 1)
-
-                        new_pos = self.pos + self.vel + action
-                        win, loose = self.get_result(new_pos)
-
-                        if 0 < len(win):
-                            game_state = 'win'
-                        elif 0 < len(loose):
-                            game_state = 'loose'
-                        else:
-                            self.vel = new_pos - self.pos
-                            self.pos = new_pos
-                            previous = current
-                            current = self.get_img(self.bg.copy())
-                            prob = forward(parameters, np.concatenate((previous, current), axis=2))
-                            img = self.numpy_to_pygame(current, img_size, list(prob))
+                        game.update(parameters)
+                        frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
 
                 pygame.display.flip()
-            print(game_state)
+            print(game.state)
         pygame.quit()
+
+
+class Game:
+
+    def __init__(self, mother):
+
+        self.mother = mother
+
+        self.state = ''  # play / win / lost / draw
+        self.pos, self.prev, self.vel = (None, ) * 3
+        self.log_img, self.log_act = (None, ) * 2
+        self.life = None
+
+    def uplog(self, parameters):
+
+        img = self.mother.generate_img(self.prev, self.pos)
+        prob = np.squeeze(forward(parameters, img.reshape(img.shape + (1,))))
+
+        if np.random.random() < self.mother.exploration_rate:
+            a = np.random.choice(len(self.mother.actions), p=prob)
+        else:
+            a = np.argmax(prob)
+
+        self.log_img.append(img)
+        self.log_act.append((a, prob))
+
+    def reset(self, parameters):
+
+        self.state = 'play'
+        self.pos = self.mother.generate_pos()
+        self.prev = self.pos.copy()
+        self.vel = np.zeros(2, dtype=int)
+        self.log_img, self.log_act = [], []
+        self.life = 0
+
+        self.uplog(parameters)
+
+    def update(self, parameters):
+
+        actions = self.mother.actions
+
+        if self.life < self.mother.life_time:
+
+            self.life += 1
+
+            self.prev = self.pos.copy()
+            self.vel += actions[self.log_act[-1][0]]
+            self.pos += self.vel
+
+            if collide(self.mother.obs, self.pos) or not self.mother.in_screen(self.pos):
+                self.state = 'lost'
+            elif collide(self.mother.goal, self.pos):
+                self.state = 'win'
+            else:
+                self.uplog(parameters)
+
+        else:
+            self.state = 'draw'
+
+    def get_data_set(self):
+
+        if self.state == 'draw':
+            return [], []
+
+        ac = len(self.mother.actions)
+        length = self.life
+        labels = []
+        epsilon = int(self.state == 'win')
+
+        if epsilon:
+            bg = np.zeros(ac)
+        else:
+            bg = np.full(ac, 1 / (ac - 1))
+
+        for t in range(length):
+
+            a, _ = self.log_act[t]
+            lab = bg.copy()
+            lab[a] = epsilon
+            labels.append(lab)
+
+        return self.log_img, labels
+
+    def get_gradients(self):
+
+        if self.state == 'draw':
+            return [], []
+
+        length = self.life
+        gradients = []
+        action_count = len(self.mother.actions)
+        epsilon = (self.state == 'win') - (self.state == 'lost')
+
+        for t in range(length):
+            a, prob = self.log_act[t]
+            grad = np.zeros(action_count)
+            grad[a] = epsilon / prob[a]
+            gradients.append(grad)
+
+        return self.log_img, gradients

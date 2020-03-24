@@ -284,8 +284,7 @@ def backward(parameters, y, cache, lambda2C=0, lambda2D=0):
     n = y.shape[1]
 
     y_hat = cache['ad' + str(parameters['Ld'])]
-    da = np.divide(1 - y, 1 - y_hat) - np.divide(y, y_hat)
-    dz = None
+    da, dy = (None, ) * 2
 
     for l in reversed(range(1, parameters['Ld'] + 1)):
         z = cache['zd' + str(l)]
@@ -591,7 +590,7 @@ def apply_shit(parameters, gradients, alpha):
     Take :
     parameters -- dictionary containing all the information about the whole network
     gradients -- partial derivative of each parameters with respect to cost
-    beta -- Momentum rate
+    alpha -- learning rate
 
     Return :
     parameters -- dictionary containing all the information about the whole network
