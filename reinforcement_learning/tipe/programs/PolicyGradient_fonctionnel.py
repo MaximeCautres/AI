@@ -126,7 +126,7 @@ class Policy_Gradient():
 
         da = np.zeros((self.ac, self.buffer.max_size))
 
-        da[act_buf, np.arange(self.buffer.max_size)] = adv_buf  # adv_buf / p_buf
+        da[act_buf, np.arange(self.buffer.max_size)] = adv_buf / p_buf  # adv_buf / p_buf
 
         gradients = backward(self.parameters, obs_buf, da)
 
