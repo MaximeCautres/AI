@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def initialize_parameters(parameters):
+def initialize_parameters(parameters, seed):
     """
     Create the parameters we need to train
 
@@ -20,6 +20,7 @@ def initialize_parameters(parameters):
     Return :
     parameters -- dictionary containing the whole network
     """
+    np.random.seed(seed)
 
     k = 10 ** -1
     current = list(parameters['idi'])
