@@ -26,5 +26,5 @@ else:
                       'Ld': 3, 'tod': (13 * 13 * 4, 64, len(actions))}
         parameters = initialize_parameters(parameters)
 
-    parameters = environment.train(parameters, 10**0, 128, 512, 1)
+    parameters = environment.train(parameters, 10**0, 256, 1024, 16)
     pickle.dump(parameters, open(file_name, 'wb'))

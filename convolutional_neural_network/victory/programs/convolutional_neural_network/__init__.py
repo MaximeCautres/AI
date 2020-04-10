@@ -284,7 +284,7 @@ def backward(parameters, y, cache, lambda2C=0, lambda2D=0):
     n = y.shape[1]
 
     y_hat = cache['ad' + str(parameters['Ld'])]
-    da, dy = (None, ) * 2
+    da, dz = (None, ) * 2
 
     for l in reversed(range(1, parameters['Ld'] + 1)):
         z = cache['zd' + str(l)]

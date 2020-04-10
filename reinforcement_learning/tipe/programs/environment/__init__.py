@@ -58,9 +58,10 @@ class Environment:
         self.actions = actions
         self.life_time = life_time
 
+        self.bus = []
+        self.exploration_rate = 0
         self.obs, self.goal = get_map()
         self.background = self.initialize_bg()
-        self.exploration_rate = None
 
     def initialize_bg(self):
 
@@ -126,6 +127,13 @@ class Environment:
 
         return pygame.transform.scale(surface, size)
 
+    def terminus(self, parameters):
+
+        probabilities = forward(parameters, np.stack(self.bus, axis=3))
+        self.bus = []
+
+        return probabilities
+
     def train(self, parameters, alpha, batch_size, epoch_count, print_length):
 
         games = [Game(self) for _ in range(batch_size)]
@@ -134,39 +142,43 @@ class Environment:
         stats = {'mean': [], 'min': [], 'max': []}
         win_rates, life_acc = [], 0
         self.exploration_rate = 1
+        self.bus = []
 
         for epoch in range(epoch_count):
 
             for game in games:
-                game.reset(parameters)
+                game.reset()
 
-            flag = True
-            while flag:
-                flag = False
+            while 0 < len(self.bus):
+
+                probabilities = self.terminus(parameters)
+                index = 0
+
                 for game in games:
                     if game.state == 'play':
-                        game.update(parameters)
-                        if game.state == 'play':
-                            flag = True
+                        prob = np.squeeze(probabilities[..., index])
+                        game.take_prob(prob)
+                        game.update()
+                        index += 1
 
             win_count = 0
-            features, gradients = [], []
+            features, labels = [], []
             for game in games:
-                f, g = game.get_gradients()
-                features += f ; gradients += g
+                f, l = game.get_data_set()
+                features += f ; labels += l
                 life_acc += game.life
                 if game.state == 'win':
                     win_count += 1
 
-            if 0 < len(features) + len(gradients):
+            if 0 < len(features) + len(labels):
                 parameters = update_parameters(parameters,
                                                backward(parameters,
                                                         np.stack(features, axis=3),
-                                                        normalize(np.stack(gradients, axis=1))),
+                                                        np.stack(labels, axis=1)),
                                                alpha)
 
             win_rates.append(win_count / batch_size)
-            self.exploration_rate *= 0.9
+            self.exploration_rate *= 0.94
 
             if not (epoch + 1) % print_length:
                 a = np.array(win_rates)
@@ -196,7 +208,8 @@ class Environment:
 
         for _ in range(count):
 
-            game.reset(parameters)
+            game.reset()
+            game.take_prob(np.squeeze(self.terminus(parameters)))
             frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
 
             while game.state == 'play':
@@ -206,8 +219,10 @@ class Environment:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONDOWN:
 
-                        game.update(parameters)
-                        frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
+                        game.update()
+                        if 0 < len(self.bus):
+                            game.take_prob(np.squeeze(self.terminus(parameters)))
+                            frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
 
                 pygame.display.flip()
             print(game.state)
@@ -225,20 +240,7 @@ class Game:
         self.log_img, self.log_act = (None, ) * 2
         self.life = None
 
-    def uplog(self, parameters):
-
-        img = self.mother.generate_img(self.prev, self.pos)
-        prob = np.squeeze(forward(parameters, img.reshape(img.shape + (1,))))
-
-        if np.random.random() < self.mother.exploration_rate:
-            a = np.random.choice(len(self.mother.actions), p=prob)
-        else:
-            a = np.argmax(prob)
-
-        self.log_img.append(img)
-        self.log_act.append((a, prob))
-
-    def reset(self, parameters):
+    def reset(self):
 
         self.state = 'play'
         self.pos = self.mother.generate_pos()
@@ -247,9 +249,24 @@ class Game:
         self.log_img, self.log_act = [], []
         self.life = 0
 
-        self.uplog(parameters)
+        self.add_img_to_bus()
 
-    def update(self, parameters):
+    def add_img_to_bus(self):
+
+        img = self.mother.generate_img(self.prev, self.pos)
+        self.mother.bus.append(img)
+        self.log_img.append(img)
+
+    def take_prob(self, prob):
+
+        if np.random.random() < self.mother.exploration_rate:
+            a = np.random.choice(len(self.mother.actions), p=prob)
+        else:
+            a = np.argmax(prob)
+
+        self.log_act.append((a, prob))
+
+    def update(self):
 
         actions = self.mother.actions
 
@@ -266,7 +283,7 @@ class Game:
             elif collide(self.mother.goal, self.pos):
                 self.state = 'win'
             else:
-                self.uplog(parameters)
+                self.add_img_to_bus()
 
         else:
             self.state = 'draw'
@@ -276,10 +293,10 @@ class Game:
         if self.state == 'draw':
             return [], []
 
+        epsilon = int(self.state == 'win')
         ac = len(self.mother.actions)
         length = self.life
         labels = []
-        epsilon = int(self.state == 'win')
 
         if epsilon:
             bg = np.zeros(ac)
@@ -287,7 +304,6 @@ class Game:
             bg = np.full(ac, 1 / (ac - 1))
 
         for t in range(length):
-
             a, _ = self.log_act[t]
             lab = bg.copy()
             lab[a] = epsilon
@@ -300,8 +316,8 @@ class Game:
         if self.state == 'draw':
             return [], []
 
-        length = self.life
         gradients = []
+        length = self.life
         action_count = len(self.mother.actions)
         epsilon = (self.state == 'win') - (self.state == 'lost')
 
