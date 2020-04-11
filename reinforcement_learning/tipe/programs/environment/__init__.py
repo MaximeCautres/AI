@@ -29,12 +29,7 @@ def collide(areas, point):
                   * (areas[1] <= point[1]) * (point[1] <= areas[3]))
 
 
-def get_map():
-    """
-    [x-, y-, x+, y+]
-    obs -- (4, obs_count)
-    goal -- (4, goal_count)
-    """
+def first_map_25x25():
 
     obs = np.array([[4, 18],
                     [5, 5],
@@ -47,6 +42,26 @@ def get_map():
                     [14]], dtype=int)
 
     return obs, goal
+
+
+def map_48x48():
+
+    obs = np.array([[0, 8, 33, 40, 35, 41, 25, 15, 10, 8, 10],
+                    [8, 5, 5, 0, 18, 16, 22, 20, 22, 25, 36],
+                    [9, 16, 41, 47, 43, 47, 29, 28, 16, 12, 18],
+                    [12, 10, 10, 7, 22, 41, 38, 23, 27, 37, 40]], dtype=int)
+
+    goal = np.array([[2, 43, 14],
+                     [2, 10, 30],
+                     [5, 46, 17],
+                     [5, 13, 33]], dtype=int)
+
+    return obs, goal
+
+
+def get_map():
+
+    return map_48x48()
 
 
 class Environment:
@@ -134,14 +149,14 @@ class Environment:
 
         return probabilities
 
-    def train(self, parameters, alpha, batch_size, epoch_count, print_length):
+    def train(self, parameters, optimizer, alpha, beta, gamma, rho, xp_discount, epoch_count, batch_size, print_length):
 
         games = [Game(self) for _ in range(batch_size)]
 
         time_begin = time.time()
         stats = {'mean': [], 'min': [], 'max': []}
         win_rates, life_acc = [], 0
-        self.exploration_rate = 1
+        self.exploration_rate = 0
         self.bus = []
 
         for epoch in range(epoch_count):
@@ -156,8 +171,7 @@ class Environment:
 
                 for game in games:
                     if game.state == 'play':
-                        prob = np.squeeze(probabilities[..., index])
-                        game.take_prob(prob)
+                        game.take_prob(np.squeeze(probabilities[..., index]))
                         game.update()
                         index += 1
 
@@ -171,14 +185,11 @@ class Environment:
                     win_count += 1
 
             if 0 < len(features) + len(labels):
-                parameters = update_parameters(parameters,
-                                               backward(parameters,
-                                                        np.stack(features, axis=3),
-                                                        np.stack(labels, axis=1)),
-                                               alpha)
+                gradients = backward(parameters, np.stack(features, axis=3), np.stack(labels, axis=1))
+                parameters = update_parameters(parameters, gradients, optimizer, alpha, beta, gamma, rho)
 
             win_rates.append(win_count / batch_size)
-            self.exploration_rate *= 0.94
+            self.exploration_rate *= xp_discount
 
             if not (epoch + 1) % print_length:
                 a = np.array(win_rates)
@@ -272,8 +283,6 @@ class Game:
 
         if self.life < self.mother.life_time:
 
-            self.life += 1
-
             self.prev = self.pos.copy()
             self.vel += actions[self.log_act[-1][0]]
             self.pos += self.vel
@@ -287,6 +296,8 @@ class Game:
 
         else:
             self.state = 'draw'
+
+        self.life += 1
 
     def get_data_set(self):
 
