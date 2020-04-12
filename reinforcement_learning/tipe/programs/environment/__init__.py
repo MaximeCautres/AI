@@ -59,9 +59,26 @@ def map_48x48():
     return obs, goal
 
 
+def moving_goal_map_25x25():
+
+    obs = np.array([[],
+                    [],
+                    [],
+                    []], dtype=int)
+
+    x, y = np.random.randint(1, 24, 2)
+
+    goal = np.array([[x - 1],
+                     [y - 1],
+                     [x + 1],
+                     [y + 1]], dtype=int)
+
+    return obs, goal
+
+
 def get_map():
 
-    return map_48x48()
+    return first_map_25x25()
 
 
 class Environment:
@@ -75,57 +92,25 @@ class Environment:
 
         self.bus = []
         self.exploration_rate = 0
-        self.obs, self.goal = get_map()
-        self.background = self.initialize_bg()
 
-    def initialize_bg(self):
+    def in_screen(self, pos):
 
-        img = np.zeros((self.w, self.h, 1))
+        borders = np.array([0, 0, self.w - 1, self.h - 1])
 
-        for x1, y1, x2, y2 in self.obs.T:
-            img[x1:x2 + 1, y1:y2 + 1] = self.color_map['obst']
+        return collide(borders, pos)
 
-        for x1, y1, x2, y2 in self.goal.T:
-            img[x1:x2 + 1, y1:y2 + 1] = self.color_map['goal']
+    def generate_frame(self, game, size):
 
-        return img
+        distribution = game.log_act[-1][1]
+        array = np.squeeze(game.background.copy())
 
-    def in_screen(self, point):
-
-        borders = np.array([0, 0, self.w-1, self.h-1])
-
-        return collide(borders, point)
-
-    def generate_pos(self):
-
-        areas = np.append(self.obs, self.goal, axis=1)
-        point = None
-
-        while point is None or collide(areas, point):
-
-            point = np.array([np.random.randint(self.w), np.random.randint(self.h)])
-
-        return point
-
-    def generate_img(self, prev, curr):
-
-        px, py = prev; cx, cy = curr
-        previous, current = self.background.copy(), self.background.copy()
-        previous[px, py], current[cx, cy] = (self.color_map['self'], ) * 2
-
-        return np.concatenate((previous, current), axis=2)
-
-    def generate_frame(self, pos, vel, distribution, size):
-
-        array = np.squeeze(self.background.copy())
-
-        if self.in_screen(pos):
-            x, y = pos
+        if self.in_screen(game.pos):
+            x, y = game.pos
             array[x, y] = self.color_map['self']
 
         surface = pygame.surfarray.make_surface(array * 255)
 
-        new_pos = pos + vel
+        new_pos = game.pos + game.vel
         ac = len(distribution)
         red = min(distribution)
         green = max(distribution)
@@ -156,7 +141,7 @@ class Environment:
         time_begin = time.time()
         stats = {'mean': [], 'min': [], 'max': []}
         win_rates, life_acc = [], 0
-        self.exploration_rate = 0
+        self.exploration_rate = xp_discount
         self.bus = []
 
         for epoch in range(epoch_count):
@@ -208,20 +193,20 @@ class Environment:
 
         return parameters
 
-    def play(self, parameters, count, unit):
+    def play(self, parameters, count, unit, use_sample=False):
 
         game = Game(self)
 
         pygame.init()
         img_size = (self.w * unit, self.h * unit)
         screen = pygame.display.set_mode(img_size)
-        self.exploration_rate = 0
+        self.exploration_rate = int(use_sample)
 
         for _ in range(count):
 
             game.reset()
             game.take_prob(np.squeeze(self.terminus(parameters)))
-            frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
+            frame = self.generate_frame(game, img_size)
 
             while game.state == 'play':
 
@@ -233,7 +218,7 @@ class Environment:
                         game.update()
                         if 0 < len(self.bus):
                             game.take_prob(np.squeeze(self.terminus(parameters)))
-                            frame = self.generate_frame(game.pos, game.vel, game.log_act[-1][1], img_size)
+                            frame = self.generate_frame(game, img_size)
 
                 pygame.display.flip()
             print(game.state)
@@ -242,19 +227,54 @@ class Environment:
 
 class Game:
 
-    def __init__(self, mother):
+    def __init__(self, env):
 
-        self.mother = mother
+        self.env = env
 
         self.state = ''  # play / win / lost / draw
         self.pos, self.prev, self.vel = (None, ) * 3
         self.log_img, self.log_act = (None, ) * 2
+        self.obs, self.goal = (None,) * 2
+        self.background = None
         self.life = None
+
+    def initialize_bg(self):
+
+        img = np.zeros((self.env.w, self.env.h, 1))
+
+        for x1, y1, x2, y2 in self.obs.T:
+            img[x1:x2 + 1, y1:y2 + 1] = self.env.color_map['obst']
+
+        for x1, y1, x2, y2 in self.goal.T:
+            img[x1:x2 + 1, y1:y2 + 1] = self.env.color_map['goal']
+
+        return img
+
+    def generate_pos(self):
+
+        areas = np.append(self.obs, self.goal, axis=1)
+        point = None
+
+        while point is None or collide(areas, point):
+            point = np.array([np.random.randint(self.env.w), np.random.randint(self.env.h)])
+
+        return point
+
+    def generate_img(self, prev, curr):
+
+        px, py = prev ; cx, cy = curr
+        previous, current = self.background.copy(), self.background.copy()
+        previous[px, py], current[cx, cy] = (self.env.color_map['self'],) * 2
+
+        return np.concatenate((previous, current), axis=2)
 
     def reset(self):
 
+        self.obs, self.goal = get_map()
+        self.background = self.initialize_bg()
+
         self.state = 'play'
-        self.pos = self.mother.generate_pos()
+        self.pos = self.generate_pos()
         self.prev = self.pos.copy()
         self.vel = np.zeros(2, dtype=int)
         self.log_img, self.log_act = [], []
@@ -264,14 +284,14 @@ class Game:
 
     def add_img_to_bus(self):
 
-        img = self.mother.generate_img(self.prev, self.pos)
-        self.mother.bus.append(img)
+        img = self.generate_img(self.prev, self.pos)
+        self.env.bus.append(img)
         self.log_img.append(img)
 
     def take_prob(self, prob):
 
-        if np.random.random() < self.mother.exploration_rate:
-            a = np.random.choice(len(self.mother.actions), p=prob)
+        if np.random.random() < self.env.exploration_rate:
+            a = np.random.choice(len(self.env.actions), p=prob)
         else:
             a = np.argmax(prob)
 
@@ -279,17 +299,19 @@ class Game:
 
     def update(self):
 
-        actions = self.mother.actions
+        actions = self.env.actions
 
-        if self.life < self.mother.life_time:
+        if self.life < self.env.life_time:
+
+            self.life += 1
 
             self.prev = self.pos.copy()
             self.vel += actions[self.log_act[-1][0]]
             self.pos += self.vel
 
-            if collide(self.mother.obs, self.pos) or not self.mother.in_screen(self.pos):
+            if collide(self.obs, self.pos) or not self.env.in_screen(self.pos):
                 self.state = 'lost'
-            elif collide(self.mother.goal, self.pos):
+            elif collide(self.goal, self.pos):
                 self.state = 'win'
             else:
                 self.add_img_to_bus()
@@ -297,15 +319,13 @@ class Game:
         else:
             self.state = 'draw'
 
-        self.life += 1
-
     def get_data_set(self):
 
         if self.state == 'draw':
             return [], []
 
         epsilon = int(self.state == 'win')
-        ac = len(self.mother.actions)
+        ac = len(self.env.actions)
         length = self.life
         labels = []
 
@@ -329,7 +349,7 @@ class Game:
 
         gradients = []
         length = self.life
-        action_count = len(self.mother.actions)
+        action_count = len(self.env.actions)
         epsilon = (self.state == 'win') - (self.state == 'lost')
 
         for t in range(length):
