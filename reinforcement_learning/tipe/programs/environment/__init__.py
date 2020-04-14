@@ -5,6 +5,7 @@ from convolutional_neural_network import *
 
 
 def show_stats(stats, t):
+
     plt.plot(t, stats['max'], color='red')
     plt.plot(t, stats['mean'], color='blue')
     plt.plot(t, stats['min'], color='green')
@@ -15,8 +16,14 @@ def show_stats(stats, t):
 
 def normalize(array):
 
-    return (array - np.mean(array, axis=0, keepdims=True)) \
-           / np.std(array, axis=0, keepdims=True)
+    if len(array) < 2:
+        return array
+
+    np_array = np.array(array)
+    mean = np.mean(np_array)
+    std = np.std(np_array)
+
+    return list((np_array - mean) / std)
 
 
 def collide(areas, point):
@@ -78,7 +85,7 @@ def moving_goal_map_25x25():
 
 def get_map():
 
-    return first_map_25x25()
+    return moving_goal_map_25x25()
 
 
 class Environment:
@@ -102,7 +109,7 @@ class Environment:
     def generate_frame(self, game, size):
 
         distribution = game.log_act[-1][1]
-        array = np.squeeze(game.background.copy())
+        array = np.squeeze(np.copy(game.background))
 
         if self.in_screen(game.pos):
             x, y = game.pos
@@ -161,17 +168,16 @@ class Environment:
                         index += 1
 
             win_count = 0
-            features, labels = [], []
+            images, grads = [], []
             for game in games:
-                f, l = game.get_data_set()
-                features += f ; labels += l
+                images += game.log_img ; grads += game.get_grad(gamma)
                 life_acc += game.life
                 if game.state == 'win':
                     win_count += 1
 
-            if 0 < len(features) + len(labels):
-                gradients = backward(parameters, np.stack(features, axis=3), np.stack(labels, axis=1))
-                parameters = update_parameters(parameters, gradients, optimizer, alpha, beta, gamma, rho)
+            if 0 < len(images) + len(grads):
+                gradients = backward(parameters, np.stack(images, axis=3), np.stack(grads, axis=1))
+                parameters = update_parameters(parameters, gradients, optimizer, alpha, beta, rho)
 
             win_rates.append(win_count / batch_size)
             self.exploration_rate *= xp_discount
@@ -263,7 +269,7 @@ class Game:
     def generate_img(self, prev, curr):
 
         px, py = prev ; cx, cy = curr
-        previous, current = self.background.copy(), self.background.copy()
+        previous, current = np.copy(self.background), np.copy(self.background)
         previous[px, py], current[cx, cy] = (self.env.color_map['self'],) * 2
 
         return np.concatenate((previous, current), axis=2)
@@ -275,7 +281,7 @@ class Game:
 
         self.state = 'play'
         self.pos = self.generate_pos()
-        self.prev = self.pos.copy()
+        self.prev = np.copy(self.pos)
         self.vel = np.zeros(2, dtype=int)
         self.log_img, self.log_act = [], []
         self.life = 0
@@ -303,9 +309,7 @@ class Game:
 
         if self.life < self.env.life_time:
 
-            self.life += 1
-
-            self.prev = self.pos.copy()
+            self.prev = np.copy(self.pos)
             self.vel += actions[self.log_act[-1][0]]
             self.pos += self.vel
 
@@ -319,43 +323,19 @@ class Game:
         else:
             self.state = 'draw'
 
-    def get_data_set(self):
+        self.life += 1
 
-        if self.state == 'draw':
-            return [], []
+    def get_grad(self, gamma):
 
-        epsilon = int(self.state == 'win')
-        ac = len(self.env.actions)
-        length = self.life
-        labels = []
-
-        if epsilon:
-            bg = np.zeros(ac)
-        else:
-            bg = np.full(ac, 1 / (ac - 1))
-
-        for t in range(length):
-            a, _ = self.log_act[t]
-            lab = bg.copy()
-            lab[a] = epsilon
-            labels.append(lab)
-
-        return self.log_img, labels
-
-    def get_gradients(self):
-
-        if self.state == 'draw':
-            return [], []
-
-        gradients = []
+        grad = []
         length = self.life
         action_count = len(self.env.actions)
-        epsilon = (self.state == 'win') - (self.state == 'lost')
+        gain = 1 if self.state == "win" else -1
 
         for t in range(length):
-            a, prob = self.log_act[t]
-            grad = np.zeros(action_count)
-            grad[a] = epsilon / prob[a]
-            gradients.append(grad)
+            a, y_hat = self.log_act[t]
+            y = np.zeros(action_count)
+            y[a] = 1
+            grad.append((y - y_hat) * gain * gamma ** (length - t))
 
-        return self.log_img, gradients
+        return grad

@@ -1,7 +1,8 @@
 import numpy as np
 
-epsilon = pow(10, -4)
+epsilon = pow(10, -5)
 parameter_topology = {'Lc': ['K'], 'Ld': ['w', 'b']}
+# np.set_printoptions(threshold=np.inf)
 
 
 def initialize_parameters(parameters, seed):
@@ -25,7 +26,6 @@ def initialize_parameters(parameters, seed):
     parameters -- dictionary containing the whole network
     """
 
-    k = 10 ** -1
     np.random.seed(seed)
     current = list(parameters['idi'])
 
@@ -36,7 +36,7 @@ def initialize_parameters(parameters, seed):
             w, h, k_d = current
             k_w, k_h, k_c = parameters['kd' + str(l)]
 
-            parameters = set_p(parameters, (k_w, k_h, k_d, k_c, 1), 'K', l, k)
+            parameters = set_p(parameters, (k_w, k_h, k_d, k_c, 1), 'K', l)
             current = [w + k_w - 1, h + k_h - 1, k_c]
 
         else:
@@ -60,13 +60,13 @@ def initialize_parameters(parameters, seed):
         cond = l < parameters['Ld'] - 1
         parameters['afd' + str(l)] = 'relu' * cond + 'softmax' * (not cond)
 
-        parameters = set_p(parameters, dnn_topology[l - 1:l + 1][::-1], 'w', l, k)
-        parameters = set_p(parameters, (dnn_topology[l], 1), 'b', l, 0)
+        parameters = set_p(parameters, dnn_topology[l - 1:l + 1][::-1], 'w', l)
+        parameters = set_p(parameters, (dnn_topology[l], 1), 'b', l)
 
     return parameters
 
 
-def set_p(parameters, shape, s, l, k):
+def set_p(parameters, shape, s, l):
     """
     Set trivial parameters
 
@@ -75,13 +75,12 @@ def set_p(parameters, shape, s, l, k):
     shape -- tuple, the shape of this parameter
     s -- 'K' or 'w' or 'b', what kind of parameter it is
     l -- the current layer
-    k -- scale random
 
     Return :
     parameters -- dictionary containing all the information about the whole network
     """
 
-    parameters[s + str(l)] = np.random.randn(*shape) * k
+    parameters[s + str(l)] = np.random.randn(*shape) * np.power(np.prod(shape), -1/3)
     parameters['t' + s + str(l)] = np.zeros(shape)
     parameters['q' + s + str(l)] = np.zeros(shape)
 
@@ -100,6 +99,8 @@ def forward(parameters, X, return_cache=False):
     Return :
     cache or output
     """
+
+    print(X)
 
     A = X
     n = X.shape[3]
@@ -140,16 +141,14 @@ def forward(parameters, X, return_cache=False):
         return a
 
 
-def backward(parameters, X, y):
+def backward(parameters, X, dz):
     """
     Back-propagate the whole network
 
     Take :
     parameters -- dictionary containing the whole network
     X -- input image (w_X, h_X, d, n)
-
-    y -- labels (ac, n)
-    da -- gradients of the output on the advantage function
+    dz -- gradients of the objective function with respect to the non normalized outputs
 
     Return :
     gradients -- dictionary containing all the gradients of the network
@@ -158,18 +157,14 @@ def backward(parameters, X, y):
     gradients = {}
     n = X.shape[3]
     cache = forward(parameters, X, True)
-
-    y_hat = cache['a' + str(parameters['Ld'] - 1)]
-    da, dz = (None,) * 2
+    da = None
 
     for l in reversed(range(1, parameters['Ld'])):
         z = cache['z' + str(l)]
         af = parameters['afd' + str(l)]
 
         if af == 'relu':
-            dz = da * relu_prime(z)
-        elif af == 'softmax':
-            dz = y_hat - y
+            dz = relu_prime(z) * da
 
         a_p = cache['a' + str(l - 1)]
         w = parameters['w' + str(l)]
@@ -197,9 +192,9 @@ def backward(parameters, X, y):
     return gradients
 
 
-def update_parameters(parameters, gradients, optimizer, alpha, beta, gamma, rho):
+def update_parameters(parameters, gradients, optimizer, alpha, beta, rho):
     """
-    Update each parameters in order to reduce cost
+    Gradient ASCEND
 
     Take :
     parameters -- dictionary containing all the information about the whole network
@@ -207,7 +202,6 @@ def update_parameters(parameters, gradients, optimizer, alpha, beta, gamma, rho)
     optimizer -- 'adadelta' or 'momentum', which optimizer used
     alpha -- learning rate
     beta -- Momentum rate
-    gamma -- RMS prop rate
     rho -- AdaDelta rate
 
     Return :
@@ -218,8 +212,6 @@ def update_parameters(parameters, gradients, optimizer, alpha, beta, gamma, rho)
         parameters = apply_shit(parameters, gradients, alpha)
     elif optimizer == 'momentum':
         parameters = apply_momentum(parameters, gradients, alpha, beta)
-    elif optimizer == 'rmsprop':
-        parameters = apply_rmsprop(parameters, gradients, alpha, gamma)
     elif optimizer == 'adadelta':
         parameters = apply_adadelta(parameters, gradients, rho)
     else:
@@ -246,7 +238,7 @@ def apply_shit(parameters, gradients, alpha):
             for v in types:
                 if k == 'Ld' or parameters['lt' + str(l)] == 'c':
 
-                    parameters[v + str(l)] -= alpha * gradients['d' + v + str(l)]
+                    parameters[v + str(l)] += alpha * gradients['d' + v + str(l)]
 
     return parameters
 
@@ -273,35 +265,7 @@ def apply_momentum(parameters, gradients, alpha, beta):
                     d = gradients['d' + v + str(l)]
                     q = beta * parameters['q' + v + str(l)] + (1 - beta) * d
 
-                    parameters[v + str(l)] -= alpha * q
-                    parameters['q' + v + str(l)] = q
-
-    return parameters
-
-
-def apply_rmsprop(parameters, gradients, alpha, gamma):
-    """
-    Apply RMS prop in order to update weights and biases
-
-    Take :
-    parameters -- dictionary containing all the information about the whole network
-    gradients -- partial derivative of each parameters with respect to cost
-    alpha -- learning rate
-    gamma -- RMS prop rate
-
-    Return :
-    parameters -- dictionary containing all the information about the whole network
-    """
-
-    for k, types in parameter_topology.items():
-        for l in range(1, parameters[k]):
-            for v in types:
-                if k == 'Ld' or parameters['lt' + str(l)] == 'c':
-
-                    d = gradients['d' + v + str(l)]
-                    q = gamma * parameters['q' + v + str(l)] + (1 - gamma) * d * d
-
-                    parameters[v + str(l)] -= alpha * np.divide(d, rms(q))
+                    parameters[v + str(l)] += alpha * q
                     parameters['q' + v + str(l)] = q
 
     return parameters
@@ -333,7 +297,7 @@ def apply_adadelta(parameters, gradients, rho):
                     c = np.divide(rms(q), rms(t)) * d
                     q = rho * q + (1 - rho) * c * c
 
-                    parameters[v + str(l)] -= c
+                    parameters[v + str(l)] += c
                     parameters['t' + v + str(l)] = t
                     parameters['q' + v + str(l)] = q
 
@@ -550,11 +514,6 @@ def elu_prime(z, eta=1):
 
 def softmax(z):
     return np.divide(np.exp(z), np.sum(np.exp(z), axis=0, keepdims=True))
-
-
-def softmax_prime(z):
-    soft = softmax(z)
-    return soft * (1 - soft)
 
 
 def rms(z):
