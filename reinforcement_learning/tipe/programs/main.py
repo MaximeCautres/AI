@@ -2,7 +2,7 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_moving_goal_1'
+file_name = 'parameters_0'
 import_file = False
 begin_with = False
 
@@ -14,7 +14,7 @@ max_move_count = 12
 optimizer = 'adadelta'
 alpha = 10**0  # learning rate
 beta = 0.9  # momentum rate
-gamma = 0.9  # discount factor
+gamma = 1  # discount factor
 rho = 0.8  # adadelta rate
 xp_discount = 0
 epoch_count = 2048
@@ -31,6 +31,8 @@ else:
     if begin_with:
         parameters = pickle.load(open(file_name, 'rb'))
     else:
+        # parameters = {'Lc': 1, 'idi': dimension + (2,),
+        #               'Ld': 3, 'tod': (25 * 25 * 2, 128, len(actions))}
         parameters = {'Lc': 3, 'idi': dimension + (2,),
                       'lt1': 'c', 'kd1': (3, 3, 4),
                       'lt2': 'p', 'ss2': (2, 2), 'pd2': (3, 3),
@@ -41,7 +43,7 @@ else:
         #               'lt3': 'c', 'kd3': (2, 2, 10),
         #               'lt4': 'p', 'ss4': (2, 2), 'pd4': (3, 3),
         #               'Ld': 3, 'tod': (9*9*10, 128, len(actions))}
-        parameters = initialize_parameters(parameters, 42)
+        parameters = initialize_parameters(parameters, 63)
 
     arg = (parameters, optimizer, alpha, beta, gamma, rho, xp_discount, epoch_count, batch_size, print_length)
     parameters = environment.train(*arg)

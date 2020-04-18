@@ -27,10 +27,6 @@ def normalize(array):
 
 
 def collide(areas, point):
-    """
-    areas -- (4, obs_count + goal_count)
-    point -- (2)
-    """
 
     return np.sum((areas[0] <= point[0]) * (point[0] <= areas[2])
                   * (areas[1] <= point[1]) * (point[1] <= areas[3]))
@@ -85,7 +81,7 @@ def moving_goal_map_25x25():
 
 def get_map():
 
-    return moving_goal_map_25x25()
+    return first_map_25x25()
 
 
 class Environment:
@@ -158,12 +154,12 @@ class Environment:
 
             while 0 < len(self.bus):
 
-                probabilities = self.terminus(parameters)
                 index = 0
+                probabilities = self.terminus(parameters)
 
                 for game in games:
                     if game.state == 'play':
-                        game.take_prob(np.squeeze(probabilities[..., index]))
+                        game.bus_stop(np.squeeze(probabilities[..., index]))
                         game.update()
                         index += 1
 
@@ -211,7 +207,7 @@ class Environment:
         for _ in range(count):
 
             game.reset()
-            game.take_prob(np.squeeze(self.terminus(parameters)))
+            game.bus_stop(np.squeeze(self.terminus(parameters)))
             frame = self.generate_frame(game, img_size)
 
             while game.state == 'play':
@@ -223,7 +219,7 @@ class Environment:
 
                         game.update()
                         if 0 < len(self.bus):
-                            game.take_prob(np.squeeze(self.terminus(parameters)))
+                            game.bus_stop(np.squeeze(self.terminus(parameters)))
                             frame = self.generate_frame(game, img_size)
 
                 pygame.display.flip()
@@ -294,7 +290,7 @@ class Game:
         self.env.bus.append(img)
         self.log_img.append(img)
 
-    def take_prob(self, prob):
+    def bus_stop(self, prob):
 
         if np.random.random() < self.env.exploration_rate:
             a = np.random.choice(len(self.env.actions), p=prob)
@@ -334,8 +330,10 @@ class Game:
 
         for t in range(length):
             a, y_hat = self.log_act[t]
-            y = np.zeros(action_count)
-            y[a] = 1
+            y = np.zeros(action_count) ; y[a] = 1
             grad.append((y - y_hat) * gain * gamma ** (length - t))
+
+        # print("log_act :", self.log_act)
+        # print("grad :", grad)
 
         return grad

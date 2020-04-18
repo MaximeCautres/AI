@@ -2,7 +2,6 @@ import numpy as np
 
 epsilon = pow(10, -5)
 parameter_topology = {'Lc': ['K'], 'Ld': ['w', 'b']}
-# np.set_printoptions(threshold=np.inf)
 
 
 def initialize_parameters(parameters, seed):
@@ -97,10 +96,8 @@ def forward(parameters, X, return_cache=False):
     return_cache -- specify if we want the cache
 
     Return :
-    cache or output
+    cache or prob
     """
-
-    print(X)
 
     A = X
     n = X.shape[3]
@@ -154,10 +151,10 @@ def backward(parameters, X, dz):
     gradients -- dictionary containing all the gradients of the network
     """
 
+    da = None
     gradients = {}
     n = X.shape[3]
     cache = forward(parameters, X, True)
-    da = None
 
     for l in reversed(range(1, parameters['Ld'])):
         z = cache['z' + str(l)]
@@ -208,8 +205,8 @@ def update_parameters(parameters, gradients, optimizer, alpha, beta, rho):
     parameters -- dictionary containing all the information about the whole network
     """
 
-    if optimizer == 'shit':
-        parameters = apply_shit(parameters, gradients, alpha)
+    if optimizer == 'vanilla':
+        parameters = apply_vanilla(parameters, gradients, alpha)
     elif optimizer == 'momentum':
         parameters = apply_momentum(parameters, gradients, alpha, beta)
     elif optimizer == 'adadelta':
@@ -220,9 +217,9 @@ def update_parameters(parameters, gradients, optimizer, alpha, beta, rho):
     return parameters
 
 
-def apply_shit(parameters, gradients, alpha):
+def apply_vanilla(parameters, gradients, alpha):
     """
-    Apply shit
+    Apply vanilla
 
     Take :
     parameters -- dictionary containing all the information about the whole network
