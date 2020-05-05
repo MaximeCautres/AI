@@ -2,7 +2,7 @@ import pickle
 from environment import *
 
 
-file_name = 'parameters_0'
+file_name = 'sshtest1'
 import_file = False
 begin_with = False
 
@@ -17,9 +17,9 @@ beta = 0.9  # momentum rate
 gamma = 1  # discount factor
 rho = 0.8  # adadelta rate
 xp_discount = 0
-epoch_count = 2048
-batch_size = 128
-print_length = 32
+epoch_count = 400
+batch_size = 25
+print_length = 10
 
 environment = Environment(dimension, color_map, actions, max_move_count)
 

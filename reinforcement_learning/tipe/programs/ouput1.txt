@@ -1,0 +1,17 @@
+Unable to init server: Could not connect: Connection refused
+Unable to init server: Impossible de se connecter : Connection refused
+
+(main.py:8030): Gdk-CRITICAL **: 00:21:45.288: gdk_cursor_new_for_display: assertion 'GDK_IS_DISPLAY (display)' failed
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Epoch 10 : win_rate = 8.0 % / length_mean = 5.108
+Epoch 20 : win_rate = 7.6 % / length_mean = 3.888
+Epoch 30 : win_rate = 11.2 % / length_mean = 3.86
+Epoch 40 : win_rate = 8.8 % / length_mean = 4.228
+Epoch 50 : win_rate = 21.2 % / length_mean = 4.52
+Epoch 60 : win_rate = 9.6 % / length_mean = 5.18
+Epoch 70 : win_rate = 15.2 % / length_mean = 3.772
+Epoch 80 : win_rate = 17.2 % / length_mean = 4.46
+Epoch 90 : win_rate = 14.4 % / length_mean = 4.028
+Epoch 100 : win_rate = 14.0 % / length_mean = 4.192
+Finished in 0 hour(s) 0 minute(s) 49 second(s).
