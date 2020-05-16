@@ -1,0 +1,62 @@
+\begin{thebibliography}{10}
+
+\bibitem{3b1b}
+Sanderson Grant.
+\newblock Neural netwotk.
+\newblock 2017.
+\newblock Youtube, 3Blue1Brown.
+
+\bibitem{bn}
+Sergey Ioffe and Christian Szegedy.
+\newblock Batch normalization: Accelerating deep network training by reducing
+  internal covariate shift.
+\newblock {\em Le beau journal}, Mars 2015.
+
+\bibitem{cifar}
+Alex Krizhevsky, Vinod Nair, and Geoffrey Hinton.
+\newblock The cifar's dataset, year={2009},
+  note={https://www.cs.toronto.edu/~kriz/cifar.html}.
+
+\bibitem{mnist}
+Yann LeCun, Corinna Cortes, and Christopher J.C.~Burges.
+\newblock The mnist database of handwritten digits.
+\newblock 1998.
+\newblock http://yann.lecun.com/exdb/mnist/.
+
+\bibitem{s4a}
+Lê Nguyên~Hoang.
+\newblock Intelligence artificielle.
+\newblock 2017.
+\newblock Youtube, Science4All.
+
+\bibitem{steve}
+Michael Nielsen~A.
+\newblock {\em "Neural Network and Deep Learning"}.
+\newblock Determination Press, 2015.
+
+\bibitem{optimiseur3}
+Alec Radford.
+\newblock Contours of a loss surface and time evolution of different
+  optimization algorithms.
+\newblock Janvier 2016.
+\newblock http://cs231n.github.io/assets/nn3/opt2.gif.
+
+\bibitem{optimiseur2}
+Alec Radford.
+\newblock A visualization of a saddle point in the optimization landscape,
+  where the curvature along different dimension has different signs.
+\newblock Janvier 2016.
+\newblock http://cs231n.github.io/assets/nn3/opt1.gif.
+
+\bibitem{optimiseur1}
+Sebastian Ruder.
+\newblock An overview of gradient descent optimization algorithms.
+\newblock Janvier 2016.
+\newblock http://ruder.io/optimizing-gradient-descent/.
+
+\bibitem{cnn}
+Zhang Zhifei.
+\newblock Derivation of backpropagation in convolutional neural network (cnn).
+\newblock Octobre 2016.
+
+\end{thebibliography}
