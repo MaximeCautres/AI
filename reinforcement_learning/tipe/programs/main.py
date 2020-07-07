@@ -12,8 +12,11 @@ dimension = (25, 25)
 max_move_count = 12
 
 optimizer = 'adadelta'
+step_size = 10**-3  # adam step size
 alpha = 10**0  # learning rate
 beta = 0.9  # momentum rate
+beta_1 = 0.9  # adam first order
+beta_2 = 0.999  # adam second order
 gamma = 1  # discount factor
 rho = 0.8  # adadelta rate
 xp_discount = 0
@@ -43,8 +46,8 @@ else:
         #               'lt3': 'c', 'kd3': (2, 2, 10),
         #               'lt4': 'p', 'ss4': (2, 2), 'pd4': (3, 3),
         #               'Ld': 3, 'tod': (9*9*10, 128, len(actions))}
-        parameters = initialize_parameters(parameters, 63)
+        parameters = initialize_parameters(parameters, 6)
 
-    arg = (parameters, optimizer, alpha, beta, gamma, rho, xp_discount, epoch_count, batch_size, print_length)
+    arg = (parameters, optimizer, step_size, alpha, beta, beta_1, beta_2, gamma, rho, xp_discount, epoch_count, batch_size, print_length)
     parameters = environment.train(*arg)
     pickle.dump(parameters, open(file_name, 'wb'))

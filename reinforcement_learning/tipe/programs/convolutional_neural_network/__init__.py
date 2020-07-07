@@ -80,8 +80,8 @@ def set_p(parameters, shape, s, l):
     """
 
     parameters[s + str(l)] = np.random.randn(*shape) * np.power(np.prod(shape), -1/3)
-    parameters['t' + s + str(l)] = np.zeros(shape)
-    parameters['q' + s + str(l)] = np.zeros(shape)
+    parameters['m' + s + str(l)] = np.zeros(shape)
+    parameters['v' + s + str(l)] = np.zeros(shape)
 
     return parameters
 
@@ -189,17 +189,21 @@ def backward(parameters, X, dz):
     return gradients
 
 
-def update_parameters(parameters, gradients, optimizer, alpha, beta, rho):
+def update_parameters(parameters, gradients, optimizer, step_size, alpha, beta, beta_1, beta_2, rho, t):
     """
     Gradient ASCEND
 
     Take :
     parameters -- dictionary containing all the information about the whole network
     gradients -- partial derivative of each parameters with respect to cost
-    optimizer -- 'adadelta' or 'momentum', which optimizer used
+    optimizer -- 'vanilla' or 'adadelta' or 'momentum' or 'adam', which optimizer used
+    step_size -- adam's 'alpha'
     alpha -- learning rate
     beta -- Momentum rate
+    beta_1 -- adam first order
+    beta_2 -- adam second order
     rho -- AdaDelta rate
+    t -- current time step
 
     Return :
     parameters -- dictionary containing all the information about the whole network
@@ -211,6 +215,8 @@ def update_parameters(parameters, gradients, optimizer, alpha, beta, rho):
         parameters = apply_momentum(parameters, gradients, alpha, beta)
     elif optimizer == 'adadelta':
         parameters = apply_adadelta(parameters, gradients, rho)
+    elif optimizer == 'adam':
+        parameters = apply_adam(parameters, gradients, step_size, beta_1, beta_2, t)
     else:
         print("Warning, no optimizer selected !")
 
@@ -232,10 +238,10 @@ def apply_vanilla(parameters, gradients, alpha):
 
     for k, types in parameter_topology.items():
         for l in range(1, parameters[k]):
-            for v in types:
+            for p in types:
                 if k == 'Ld' or parameters['lt' + str(l)] == 'c':
 
-                    parameters[v + str(l)] += alpha * gradients['d' + v + str(l)]
+                    parameters[p + str(l)] += alpha * gradients['d' + p + str(l)]
 
     return parameters
 
@@ -256,14 +262,14 @@ def apply_momentum(parameters, gradients, alpha, beta):
 
     for k, types in parameter_topology.items():
         for l in range(1, parameters[k]):
-            for v in types:
+            for p in types:
                 if k == 'Ld' or parameters['lt' + str(l)] == 'c':
 
-                    d = gradients['d' + v + str(l)]
-                    q = beta * parameters['q' + v + str(l)] + (1 - beta) * d
+                    d = gradients['d' + p + str(l)]
+                    m = beta * parameters['m' + p + str(l)] + (1 - beta) * d
 
-                    parameters[v + str(l)] += alpha * q
-                    parameters['q' + v + str(l)] = q
+                    parameters[p + str(l)] += alpha * m
+                    parameters['m' + p + str(l)] = m
 
     return parameters
 
@@ -283,20 +289,56 @@ def apply_adadelta(parameters, gradients, rho):
 
     for k, types in parameter_topology.items():
         for l in range(1, parameters[k]):
-            for v in types:
+            for p in types:
                 if k == 'Ld' or parameters['lt' + str(l)] == 'c':
 
-                    d = gradients['d' + v + str(l)]
-                    t = parameters['t' + v + str(l)]
-                    q = parameters['q' + v + str(l)]
+                    d = gradients['d' + p + str(l)]
+                    m = parameters['m' + p + str(l)]
+                    v = parameters['v' + p + str(l)]
 
-                    t = rho * t + (1 - rho) * d * d
-                    c = np.divide(rms(q), rms(t)) * d
-                    q = rho * q + (1 - rho) * c * c
+                    m = rho * m + (1 - rho) * d * d
+                    c = np.divide(np.sqrt(v + epsilon), np.sqrt(m + epsilon)) * d
+                    v = rho * v + (1 - rho) * c * c
 
-                    parameters[v + str(l)] += c
-                    parameters['t' + v + str(l)] = t
-                    parameters['q' + v + str(l)] = q
+                    parameters[p + str(l)] += c
+                    parameters['m' + p + str(l)] = m
+                    parameters['v' + p + str(l)] = v
+
+    return parameters
+
+
+def apply_adam(parameters, gradients, step_size, beta_1, beta_2, t):
+    """
+    Apply adadelta in order to update weights and biases
+
+    Take :
+    parameters -- dictionary containing all the information about the whole network
+    gradients -- partial derivative of each parameters with respect to cost
+    step_size -- adam's 'alpha'
+    beta_1 -- adam first order
+    beta_2 -- adam second order
+    t -- current time step
+
+    Return :
+    parameters -- dictionary containing all the information about the whole network
+    """
+
+    for k, types in parameter_topology.items():
+        for l in range(1, parameters[k]):
+            for p in types:
+                if k == 'Ld' or parameters['lt' + str(l)] == 'c':
+
+                    d = gradients['d' + p + str(l)]
+                    m = parameters['m' + p + str(l)]
+                    v = parameters['v' + p + str(l)]
+
+                    m = beta_1 * m + (1 - beta_1) * d
+                    v = beta_2 * v + (1 - beta_2) * d * d
+                    alpha = step_size * np.sqrt(1 - beta_2 ** t) / (1 - beta_1 ** t)
+
+                    parameters[p + str(l)] += alpha * m / (np.sqrt(v) + epsilon)
+                    parameters['m' + p + str(l)] = m
+                    parameters['v' + p + str(l)] = v
 
     return parameters
 
@@ -511,7 +553,3 @@ def elu_prime(z, eta=1):
 
 def softmax(z):
     return np.divide(np.exp(z), np.sum(np.exp(z), axis=0, keepdims=True))
-
-
-def rms(z):
-    return np.sqrt(z + epsilon)

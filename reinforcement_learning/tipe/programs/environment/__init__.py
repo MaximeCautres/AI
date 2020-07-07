@@ -137,7 +137,7 @@ class Environment:
 
         return probabilities
 
-    def train(self, parameters, optimizer, alpha, beta, gamma, rho, xp_discount, epoch_count, batch_size, print_length):
+    def train(self, parameters, optimizer, step_size, alpha, beta, beta_1, beta_2, gamma, rho, xp_discount, epoch_count, batch_size, print_length):
 
         games = [Game(self) for _ in range(batch_size)]
 
@@ -173,7 +173,7 @@ class Environment:
 
             if 0 < len(images) + len(grads):
                 gradients = backward(parameters, np.stack(images, axis=3), np.stack(grads, axis=1))
-                parameters = update_parameters(parameters, gradients, optimizer, alpha, beta, rho)
+                parameters = update_parameters(parameters, gradients, optimizer, step_size, alpha, beta, beta_1, beta_2, rho, epoch+1)
 
             win_rates.append(win_count / batch_size)
             self.exploration_rate *= xp_discount
@@ -325,15 +325,27 @@ class Game:
 
         grad = []
         length = self.life
-        action_count = len(self.env.actions)
-        gain = 1 if self.state == "win" else -1
+        ac = len(self.env.actions)
+        eps = int(self.state == "win")
+        bg = np.zeros(ac) if eps else np.full(ac, 1 / (ac - 1))
 
         for t in range(length):
             a, y_hat = self.log_act[t]
-            y = np.zeros(action_count) ; y[a] = 1
-            grad.append((y - y_hat) * gain * gamma ** (length - t))
-
-        # print("log_act :", self.log_act)
-        # print("grad :", grad)
+            y = np.copy(bg) ; y[a] = eps
+            grad.append((y - y_hat) * gamma ** (length - t))
 
         return grad
+
+    # def get_grad(self, gamma):
+    #
+    #     grad = []
+    #     length = self.life
+    #     action_count = len(self.env.actions)
+    #     gain = 1 if self.state == "win" else -1
+    #
+    #     for t in range(length):
+    #         a, y_hat = self.log_act[t]
+    #         y = np.zeros(action_count) ; y[a] = 1
+    #         grad.append((y - y_hat) * gain * gamma ** (length - t))
+    #
+    #     return grad
