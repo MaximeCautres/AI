@@ -1,0 +1,45 @@
+\babel@toc {french}{}
+\contentsline {part}{I\hspace {1em}Solutions technologiques}{3}% 
+\contentsline {section}{\numberline {1}Courte \IeC {\'e}tude de l'existant}{3}% 
+\contentsline {section}{\numberline {2}Qu'est ce que l'intelligence artificielle ?}{4}% 
+\contentsline {subsection}{\numberline {2.1}Un peu d'histoire}{4}% 
+\contentsline {subsection}{\numberline {2.2}Les grandes id\IeC {\'e}es}{4}% 
+\contentsline {part}{II\hspace {1em}Le Projet}{5}% 
+\contentsline {section}{\numberline {3}Les notions:}{5}% 
+\contentsline {subsection}{\numberline {3.1}Les fonctions $F^*$ et $f$}{5}% 
+\contentsline {subsection}{\numberline {3.2}La fonction erreur $E$}{6}% 
+\contentsline {subsection}{\numberline {3.3}L'apprentissage}{6}% 
+\contentsline {subsection}{\numberline {3.4}Les diff\IeC {\'e}rents types d'algorithmes}{6}% 
+\contentsline {subsection}{\numberline {3.5}Les bases de donn\IeC {\'e}es}{7}% 
+\contentsline {part}{III\hspace {1em}Premier algorithme:}{7}% 
+\contentsline {section}{\numberline {4}Deep Neural Networks:}{7}% 
+\contentsline {section}{\numberline {5}Evolution de l'algorithme}{8}% 
+\contentsline {subsection}{\numberline {5.1}D\IeC {\'e}couverte de la technologie}{8}% 
+\contentsline {subsection}{\numberline {5.2}Familiarisation avec la r\IeC {\'e}tro-propagation}{9}% 
+\contentsline {subsubsection}{\numberline {5.2.1}Les notations}{9}% 
+\contentsline {subsubsection}{\numberline {5.2.2}Les \IeC {\'e}quations math\IeC {\'e}matiques}{10}% 
+\contentsline {subsubsection}{\numberline {5.2.3}Les mini-batchs}{10}% 
+\contentsline {subsubsection}{\numberline {5.2.4}L'algorithme d'apprentissage:}{11}% 
+\contentsline {subsection}{\numberline {5.3}Algorithme final}{12}% 
+\contentsline {subsubsection}{\numberline {5.3.1}Fonctions d'activations}{12}% 
+\contentsline {subsubsection}{\numberline {5.3.2}Les optimiseurs}{12}% 
+\contentsline {subsubsection}{\numberline {5.3.3}Le Drop out et principe de sur-apprentissage}{13}% 
+\contentsline {section}{\numberline {6}R\IeC {\'e}sultat}{14}% 
+\contentsline {part}{IV\hspace {1em}Second algorithme}{16}% 
+\contentsline {section}{\numberline {7}Convolutional Neural Networks:}{16}% 
+\contentsline {section}{\numberline {8}\IeC {\'E}volution}{20}% 
+\contentsline {subsection}{\numberline {8.1}Prolongement et adaptation de la r\IeC {\'e}tro-propagation}{20}% 
+\contentsline {subsubsection}{\numberline {8.1.1}Les notations}{20}% 
+\contentsline {subsubsection}{\numberline {8.1.2}Les \IeC {\'e}quations math\IeC {\'e}matiques}{20}% 
+\contentsline {subsubsection}{\numberline {8.1.3}L'algorithme d'apprentissage}{21}% 
+\contentsline {subsection}{\numberline {8.2}Algorithme final et Batch-Normalization}{21}% 
+\contentsline {section}{\numberline {9}R\IeC {\'e}sultats}{23}% 
+\contentsline {part}{V\hspace {1em}Conclusion G\IeC {\'e}n\IeC {\'e}rale}{26}% 
+\contentsline {part}{VI\hspace {1em}Preuves}{28}% 
+\contentsline {section}{\numberline {10}D\IeC {\'e}monstration des \IeC {\'e}quations de la r\IeC {\'e}tro-propagation DNN}{28}% 
+\contentsline {section}{\numberline {11}D\IeC {\'e}monstration des \IeC {\'e}quations de la r\IeC {\'e}tro-propagation CNN}{29}% 
+\contentsline {section}{\numberline {12}D\IeC {\'e}monstration des \IeC {\'e}quations de r\IeC {\'e}tro-propagation Batch-normalisation}{31}% 
+\contentsline {part}{VII\hspace {1em}Algorithmes:}{33}% 
+\contentsline {section}{\numberline {13}Algorithme interface et sauvegarde:}{33}% 
+\contentsline {section}{\numberline {14}Algorithme d'ex\IeC {\'e}cution du r\IeC {\'e}seau de neurones}{35}% 
+\contentsline {section}{\numberline {15}Algorithme de r\IeC {\'e}tro-propagation}{37}% 

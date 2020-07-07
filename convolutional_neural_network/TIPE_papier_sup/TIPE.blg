@@ -1,0 +1,18 @@
+This is BibTeX, Version 0.99dThe top-level auxiliary file: TIPE.aux
+The style file: plain.bst
+Database file #1: data_base.bib
+I was expecting a `,' or a `}'---line 70 of file data_base.bib
+ : 
+ : @article{mnist,
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
+Warning--empty journal in 3b1b
+Warning--empty journal in cifar
+Warning--empty year in cifar
+Warning--empty journal in mnist
+Warning--empty journal in s4a
+Warning--empty journal in optimiseur3
+Warning--empty journal in optimiseur2
+Warning--empty journal in optimiseur1
+Warning--empty journal in cnn
+(There was 1 error message)

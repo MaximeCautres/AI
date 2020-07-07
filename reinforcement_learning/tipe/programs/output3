@@ -1,0 +1,43 @@
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Epoch 10 : win_rate = 8.0 % / length_mean = 5.108
+Epoch 20 : win_rate = 7.6 % / length_mean = 3.888
+Epoch 30 : win_rate = 11.2 % / length_mean = 3.86
+Epoch 40 : win_rate = 8.8 % / length_mean = 4.228
+Epoch 50 : win_rate = 21.2 % / length_mean = 4.52
+Epoch 60 : win_rate = 9.6 % / length_mean = 5.18
+Epoch 70 : win_rate = 15.2 % / length_mean = 3.772
+Epoch 80 : win_rate = 17.2 % / length_mean = 4.46
+Epoch 90 : win_rate = 14.4 % / length_mean = 4.028
+Epoch 100 : win_rate = 14.0 % / length_mean = 4.192
+Epoch 110 : win_rate = 8.8 % / length_mean = 4.528
+Epoch 120 : win_rate = 18.4 % / length_mean = 3.888
+Epoch 130 : win_rate = 13.6 % / length_mean = 3.804
+Epoch 140 : win_rate = 20.8 % / length_mean = 4.016
+Epoch 150 : win_rate = 20.4 % / length_mean = 3.908
+Epoch 160 : win_rate = 25.2 % / length_mean = 3.908
+Epoch 170 : win_rate = 20.8 % / length_mean = 4.164
+Epoch 180 : win_rate = 21.2 % / length_mean = 3.804
+Epoch 190 : win_rate = 26.4 % / length_mean = 3.704
+Epoch 200 : win_rate = 25.2 % / length_mean = 3.724
+Epoch 210 : win_rate = 14.0 % / length_mean = 4.544
+Epoch 220 : win_rate = 28.8 % / length_mean = 3.704
+Epoch 230 : win_rate = 40.0 % / length_mean = 3.756
+Epoch 240 : win_rate = 27.2 % / length_mean = 4.016
+Epoch 250 : win_rate = 27.6 % / length_mean = 3.828
+Epoch 260 : win_rate = 26.4 % / length_mean = 4.34
+Epoch 270 : win_rate = 28.8 % / length_mean = 4.0
+Epoch 280 : win_rate = 30.0 % / length_mean = 4.524
+Epoch 290 : win_rate = 32.8 % / length_mean = 4.12
+Epoch 300 : win_rate = 36.0 % / length_mean = 4.0
+Epoch 310 : win_rate = 30.4 % / length_mean = 3.916
+Epoch 320 : win_rate = 33.6 % / length_mean = 4.068
+Epoch 330 : win_rate = 35.6 % / length_mean = 4.396
+Epoch 340 : win_rate = 31.2 % / length_mean = 4.0
+Epoch 350 : win_rate = 36.0 % / length_mean = 4.28
+Epoch 360 : win_rate = 35.2 % / length_mean = 3.7
+Epoch 370 : win_rate = 39.2 % / length_mean = 3.812
+Epoch 380 : win_rate = 37.2 % / length_mean = 4.072
+Epoch 390 : win_rate = 46.8 % / length_mean = 4.332
+Epoch 400 : win_rate = 43.6 % / length_mean = 4.024
+Finished in 0 hour(s) 3 minute(s) 2 second(s).
