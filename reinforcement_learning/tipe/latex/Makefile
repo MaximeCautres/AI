@@ -10,6 +10,7 @@ pdf:
 	@pdflatex slide.tex
 	@pdflatex  slide.tex
 
+
 read:
 	@evince slide.pdf &
 
